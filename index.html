@@ -39,7 +39,7 @@ body {
   background: var(--bg);
   color: var(--ink);
   overflow-x: hidden;
-  cursor: none;
+  cursor: pointer;
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -163,7 +163,7 @@ nav.scrolled {
   color: var(--bg);
   border: none;
   border-radius: 2px;
-  cursor: none;
+  cursor: pointer;
   text-decoration: none;
   transition: background 0.2s, transform 0.15s;
   display: inline-block;
@@ -172,7 +172,7 @@ nav.scrolled {
 
 .hamburger {
   display: none;
-  flex-direction: column; gap: 5px; cursor: none;
+  flex-direction: column; gap: 5px; cursor: pointer;
   background: none; border: none; padding: 4px;
 }
 .hamburger span {
@@ -621,7 +621,7 @@ nav.scrolled {
   border: 1px solid var(--border);
   background: transparent;
   color: var(--ink3);
-  cursor: none;
+  cursor: pointer;
   border-radius: 2px;
   transition: all 0.2s;
 }
@@ -646,7 +646,7 @@ nav.scrolled {
 .project-card {
   background: var(--surface);
   padding: 2.5rem;
-  cursor: none;
+  cursor: pointer;
   transition: background 0.3s, transform 0.4s var(--ease);
   position: relative;
   overflow: hidden;
@@ -736,7 +736,7 @@ nav.scrolled {
   text-transform: uppercase;
   color: var(--gold-dim);
   background: none; border: none;
-  cursor: none;
+  cursor: pointer;
   padding: 0;
   display: flex; align-items: center; gap: 0.5rem;
   transition: gap 0.2s, color 0.2s;
@@ -781,7 +781,7 @@ nav.scrolled {
   inset: 0;
   background: rgba(26,26,24,0.7);
   backdrop-filter: blur(4px);
-  cursor: none;
+  cursor: pointer;
 }
 
 .modal-inner {
@@ -828,7 +828,7 @@ nav.scrolled {
   background: var(--bg);
   border: 1px solid var(--border);
   display: flex; align-items: center; justify-content: center;
-  cursor: none;
+  cursor: pointer;
   transition: background 0.2s, border-color 0.2s;
 }
 .modal-close:hover { background: var(--ink); border-color: var(--ink); }
@@ -1074,7 +1074,7 @@ nav.scrolled {
   color: var(--bg);
   border: none;
   border-radius: 4px;
-  cursor: none;
+  cursor: pointer;
   font-family: 'DM Mono', monospace;
   font-size: 0.72rem;
   letter-spacing: 0.16em;
@@ -1898,7 +1898,9 @@ const modalTitle = document.getElementById('modalTitle');
 function openProject(btn) {
   const card = btn.closest('.project-card');
   const file = card.dataset.file;
-  window.open(file, '_blank');
+  if (file) {
+    window.open(file, '_blank');
+  }
 }
 
 function closeModal() {
@@ -1989,6 +1991,15 @@ document.querySelectorAll('.cv-download, .form-btn, .nav-cv, .pc-open').forEach(
     btn.style.transform = '';
   });
 });
+
+/* Make entire card clickable */
+document.querySelectorAll('.project-card[data-file]').forEach(card => {
+  card.addEventListener('click', function(e) {
+    const file = this.dataset.file;
+    if (file) window.open(file, '_blank');
+  });
+});
+
 </script>
 </body>
 </html>
