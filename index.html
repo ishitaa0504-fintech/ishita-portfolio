@@ -1898,15 +1898,7 @@ const modalTitle = document.getElementById('modalTitle');
 function openProject(btn) {
   const card = btn.closest('.project-card');
   const file = card.dataset.file;
-  const title = card.dataset.title;
-  modalTitle.textContent = title;
-  modalFrame.src = file;
-  modal.style.display = 'flex';
-  // slight delay for display to take effect
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => { modal.classList.add('open'); });
-  });
-  document.body.style.overflow = 'hidden';
+  window.open(file, '_blank');
 }
 
 function closeModal() {
