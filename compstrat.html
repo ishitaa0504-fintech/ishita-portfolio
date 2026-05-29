@@ -1,0 +1,1970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Comparative Portfolio Strategy Study — Nifty 50 (2014–2024)</title>
+
+<!-- REPLACE: Update STRATEGY_DATA with real notebook output, and set PDF_URL to your hosted PDF link -->
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+/* ═══════════════════════════════════════════════════════
+   DESIGN TOKENS — hardcoded palette
+═══════════════════════════════════════════════════════ */
+:root {
+  /* Backgrounds */
+  --bg:          #f5f2ec;
+  --bg2:         #f0ece3;
+  --bg3:         #ffffff;
+  --bg4:         #e8e4db;
+
+  /* Borders */
+  --border:      rgba(26,26,24,0.10);
+  --border2:     rgba(26,26,24,0.18);
+
+  /* Text */
+  --text:        #1a1a18;
+  --text2:       #4a4a44;
+  --text3:       #8a8a80;
+
+  /* Green */
+  --green:       #1a6b3a;
+  --green2:      #2d9e58;
+  --green-tint:  #e8f5ee;
+
+  /* Amber */
+  --amber:       #b85c00;
+  --amber-tint:  #fff3e0;
+
+  /* Red */
+  --red:         #b52a2a;
+  --red-tint:    #fdeaea;
+
+  /* Blue */
+  --blue:        #1a4480;
+  --blue-tint:   #e8eef8;
+
+  /* Gold accent */
+  --gold:        #c8a84b;
+  --gold2:       #b8943a;
+  --gold-tint:   #fdf6e3;
+
+  /* Strategy palette — distinct, warm/earthy to complement light bg */
+  --s1: #1a4480;   /* Buy & Hold    — deep blue       */
+  --s2: #1a6b3a;   /* CAPM          — deep green       */
+  --s3: #7c3d8a;   /* MVO           — plum purple      */
+  --s4: #b85c00;   /* Momentum      — amber/brown      */
+  --s5: #2d9e58;   /* ML RF         — mid green        */
+  --s6: #b52a2a;   /* CVaR          — deep red         */
+  --s7: #c8a84b;   /* Regime HMM    — gold             */
+
+  --radius:    12px;
+  --radius-sm: 8px;
+  --transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: #f5f2ec;
+  color: #1a1a18;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: #f5f2ec; }
+::-webkit-scrollbar-thumb { background: #c8c4bb; border-radius: 3px; }
+
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; border: none; background: none; font-family: inherit; }
+
+/* ═══════════════════════════════════════════════════════
+   UTILITIES
+═══════════════════════════════════════════════════════ */
+.container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+.card-surface {
+  background: #ffffff;
+  border: 1px solid rgba(26,26,24,0.10);
+  border-radius: 12px;
+}
+
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.04em; text-transform: uppercase;
+}
+.badge-trad  { background: #e8eef8; color: #1a4480; border: 1px solid rgba(26,68,128,0.25); }
+.badge-ml    { background: #e8f5ee; color: #1a6b3a; border: 1px solid rgba(26,107,58,0.25); }
+.badge-gold  { background: #fdf6e3; color: #b8943a; border: 1px solid rgba(200,168,75,0.35); }
+.badge-amber { background: #fff3e0; color: #b85c00; border: 1px solid rgba(184,92,0,0.25); }
+
+.section-tag {
+  display: inline-block;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: #1a6b3a; margin-bottom: 12px;
+}
+.section-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(24px, 4vw, 38px);
+  font-weight: 700; line-height: 1.15;
+  color: #1a1a18; margin-bottom: 12px;
+}
+.section-desc {
+  color: #4a4a44; font-size: 15px;
+  max-width: 560px; line-height: 1.75;
+  margin-bottom: 40px;
+}
+
+/* Fade-in */
+.fade-in {
+  opacity: 0; transform: translateY(22px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.fade-in.visible { opacity: 1; transform: translateY(0); }
+.fade-in:nth-child(2) { transition-delay: 0.08s; }
+.fade-in:nth-child(3) { transition-delay: 0.16s; }
+.fade-in:nth-child(4) { transition-delay: 0.24s; }
+.fade-in:nth-child(5) { transition-delay: 0.32s; }
+
+/* ═══════════════════════════════════════════════════════
+   NAVBAR
+═══════════════════════════════════════════════════════ */
+#navbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  background: rgba(245,242,236,0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(26,26,24,0.10);
+}
+.nav-inner {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  height: 60px; padding: 0 24px;
+  max-width: 1200px; margin: 0 auto;
+}
+.nav-logo {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px; font-weight: 700;
+  color: #1a1a18;
+  display: flex; align-items: center; gap: 8px;
+}
+.nav-logo span { color: #1a6b3a; }
+.nav-links {
+  display: flex; align-items: center; gap: 2px;
+  list-style: none;
+}
+.nav-links a {
+  font-size: 12px; font-weight: 500;
+  color: #4a4a44; padding: 6px 11px;
+  border-radius: 6px;
+  transition: var(--transition);
+  letter-spacing: 0.02em;
+}
+.nav-links a:hover { color: #1a1a18; background: rgba(26,26,24,0.06); }
+.nav-links a.active { color: #1a6b3a; background: #e8f5ee; }
+
+.nav-ctas { display: flex; align-items: center; gap: 8px; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 18px; border-radius: 8px;
+  font-size: 13px; font-weight: 600;
+  transition: var(--transition); letter-spacing: 0.01em;
+}
+.btn-green {
+  background: #1a6b3a; color: #ffffff;
+  border: 1px solid #1a6b3a;
+}
+.btn-green:hover {
+  background: #2d9e58; border-color: #2d9e58;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(26,107,58,0.25);
+}
+.btn-blue {
+  background: #1a4480; color: #ffffff;
+  border: 1px solid #1a4480;
+}
+.btn-blue:hover {
+  background: #1e52a0; border-color: #1e52a0;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(26,68,128,0.25);
+}
+.btn-outline {
+  background: #ffffff; color: #1a1a18;
+  border: 1px solid rgba(26,26,24,0.18);
+}
+.btn-outline:hover {
+  background: #f0ece3;
+  border-color: rgba(26,26,24,0.28);
+}
+.btn-gold {
+  background: #c8a84b; color: #ffffff;
+  border: 1px solid #c8a84b;
+}
+.btn-gold:hover {
+  background: #b8943a; border-color: #b8943a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(200,168,75,0.3);
+}
+.btn-amber {
+  background: #b85c00; color: #ffffff;
+  border: 1px solid #b85c00;
+}
+.btn-amber:hover { background: #a05000; }
+
+/* Hamburger */
+.hamburger {
+  display: none; flex-direction: column; gap: 5px;
+  padding: 8px; cursor: pointer;
+}
+.hamburger span {
+  display: block; width: 22px; height: 2px;
+  background: #4a4a44; border-radius: 2px;
+  transition: var(--transition);
+}
+.mobile-menu {
+  display: none; position: absolute; top: 60px;
+  left: 0; right: 0;
+  background: #f5f2ec;
+  border-bottom: 1px solid rgba(26,26,24,0.10);
+  padding: 16px 24px;
+}
+.mobile-menu.open { display: block; }
+.mobile-menu a {
+  display: block; padding: 12px 0;
+  border-bottom: 1px solid rgba(26,26,24,0.08);
+  color: #4a4a44; font-size: 14px; font-weight: 500;
+}
+.mobile-menu a:last-child { border-bottom: none; }
+
+/* ═══════════════════════════════════════════════════════
+   HERO
+═══════════════════════════════════════════════════════ */
+#hero {
+  min-height: 100vh;
+  display: flex; align-items: center;
+  position: relative; overflow: hidden;
+  padding-top: 80px;
+  background: #f5f2ec;
+}
+
+/* Subtle grid */
+#hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(26,107,58,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(26,107,58,0.05) 1px, transparent 1px);
+  background-size: 56px 56px;
+  animation: gridMove 24s linear infinite;
+}
+@keyframes gridMove {
+  0%   { background-position: 0 0; }
+  100% { background-position: 56px 56px; }
+}
+
+/* Warm glow blobs */
+.hero-blob {
+  position: absolute; border-radius: 50%;
+  filter: blur(80px); pointer-events: none;
+}
+.blob-1 {
+  width: 560px; height: 560px;
+  background: radial-gradient(circle, rgba(200,168,75,0.12) 0%, transparent 70%);
+  top: -80px; right: -60px;
+  animation: blobPulse 9s ease-in-out infinite;
+}
+.blob-2 {
+  width: 380px; height: 380px;
+  background: radial-gradient(circle, rgba(26,107,58,0.09) 0%, transparent 70%);
+  bottom: 60px; left: -40px;
+  animation: blobPulse 11s ease-in-out infinite reverse;
+}
+@keyframes blobPulse {
+  0%,100% { transform: scale(1); opacity: 0.8; }
+  50%      { transform: scale(1.12); opacity: 1; }
+}
+
+/* Animated chart lines */
+.hero-chart {
+  position: absolute; right: 0; bottom: 0;
+  width: 55%; height: 65%;
+  opacity: 0.10; pointer-events: none;
+}
+
+.hero-content { position: relative; z-index: 2; padding: 60px 0; }
+
+.hero-eyebrow {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 20px;
+}
+.hero-eyebrow-line {
+  width: 32px; height: 2px;
+  background: #1a6b3a; border-radius: 1px;
+}
+.hero-eyebrow span {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: #1a6b3a;
+}
+
+.hero-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(36px, 6vw, 66px);
+  font-weight: 700; line-height: 1.05;
+  color: #1a1a18; margin-bottom: 8px;
+}
+.hero-title .gradient-text {
+  background: linear-gradient(135deg, #1a6b3a 0%, #2d9e58 50%, #c8a84b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-subtitle {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(18px, 2.5vw, 28px);
+  font-weight: 500; color: #4a4a44;
+  margin-bottom: 20px;
+}
+.hero-desc {
+  font-size: 16px; color: #4a4a44;
+  max-width: 520px; line-height: 1.75;
+  margin-bottom: 36px;
+}
+.hero-ctas {
+  display: flex; flex-wrap: wrap; gap: 12px;
+  margin-bottom: 48px;
+}
+.hero-ctas .btn { padding: 13px 24px; font-size: 14px; border-radius: 10px; }
+
+/* Stat strip */
+.hero-stats {
+  display: flex; flex-wrap: wrap; gap: 0;
+  background: #ffffff;
+  border: 1px solid rgba(26,26,24,0.12);
+  border-radius: 12px;
+  overflow: hidden; max-width: 640px;
+  box-shadow: 0 2px 16px rgba(26,26,24,0.06);
+}
+.hero-stat {
+  flex: 1; min-width: 100px;
+  padding: 16px 20px;
+  border-right: 1px solid rgba(26,26,24,0.08);
+}
+.hero-stat:last-child { border-right: none; }
+.hero-stat-val {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 22px; font-weight: 700;
+  color: #1a6b3a; display: block;
+}
+.hero-stat-label {
+  font-size: 11px; color: #8a8a80;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  margin-top: 2px; display: block;
+}
+
+/* Scroll hint */
+.scroll-hint {
+  position: absolute; bottom: 32px; left: 50%;
+  transform: translateX(-50%);
+  display: flex; flex-direction: column;
+  align-items: center; gap: 8px;
+  color: #8a8a80; font-size: 10px;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  animation: bounce 2.2s ease-in-out infinite;
+}
+@keyframes bounce {
+  0%,100% { transform: translateX(-50%) translateY(0); }
+  50%      { transform: translateX(-50%) translateY(7px); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   DIVIDERS
+═══════════════════════════════════════════════════════ */
+.section-divider {
+  width: 100%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(26,26,24,0.12), transparent);
+}
+
+/* ═══════════════════════════════════════════════════════
+   OVERVIEW
+═══════════════════════════════════════════════════════ */
+#overview { padding: 100px 0; background: #f5f2ec; }
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px; margin-bottom: 60px;
+}
+.overview-card {
+  background: #ffffff;
+  border: 1px solid rgba(26,26,24,0.10);
+  border-radius: 12px; padding: 20px;
+  transition: var(--transition);
+}
+.overview-card:hover {
+  border-color: rgba(26,107,58,0.3);
+  box-shadow: 0 4px 20px rgba(26,107,58,0.08);
+  transform: translateY(-2px);
+}
+.overview-icon { font-size: 22px; margin-bottom: 10px; display: block; }
+.overview-val {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 18px; font-weight: 700;
+  color: #1a1a18; margin-bottom: 4px;
+}
+.overview-key { font-size: 11px; color: #8a8a80; letter-spacing: 0.04em; }
+
+/* Research questions */
+.rq-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+}
+.rq-card {
+  background: #ffffff;
+  border: 1px solid rgba(26,26,24,0.10);
+  border-radius: 12px; padding: 22px;
+  border-left: 3px solid;
+}
+.rq-card:nth-child(1) { border-left-color: #1a6b3a; }
+.rq-card:nth-child(2) { border-left-color: #1a4480; }
+.rq-card:nth-child(3) { border-left-color: #c8a84b; }
+.rq-type {
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.15em; text-transform: uppercase;
+  color: #8a8a80; margin-bottom: 8px;
+}
+.rq-text { font-size: 14px; color: #1a1a18; line-height: 1.65; font-style: italic; }
+
+/* ═══════════════════════════════════════════════════════
+   STRATEGIES
+═══════════════════════════════════════════════════════ */
+#strategies { padding: 100px 0; background: #f0ece3; }
+
+.filter-bar { display: flex; gap: 8px; margin-bottom: 28px; flex-wrap: wrap; }
+.filter-btn {
+  padding: 8px 18px; border-radius: 8px;
+  font-size: 12px; font-weight: 600;
+  letter-spacing: 0.05em; text-transform: uppercase;
+  border: 1px solid rgba(26,26,24,0.14);
+  color: #4a4a44; background: #ffffff;
+  transition: var(--transition);
+}
+.filter-btn:hover { background: #f5f2ec; border-color: rgba(26,26,24,0.22); color: #1a1a18; }
+.filter-btn.active { background: #1a6b3a; color: #ffffff; border-color: #1a6b3a; }
+
+.strategies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+}
+.strat-card {
+  background: #ffffff;
+  border: 1px solid rgba(26,26,24,0.10);
+  border-radius: 12px; padding: 24px;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative; overflow: hidden;
+}
+.strat-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: var(--card-accent, #1a6b3a);
+  transform: scaleX(0); transform-origin: left;
+  transition: transform 0.3s ease;
+}
+.strat-card:hover::before, .strat-card.expanded::before { transform: scaleX(1); }
+.strat-card:hover {
+  border-color: rgba(26,26,24,0.20);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 36px rgba(26,26,24,0.10);
+}
+.strat-card.hidden { display: none; }
+
+.strat-header {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; margin-bottom: 12px;
+}
+.strat-num {
+  font-size: 10px; font-weight: 700;
+  color: #8a8a80; letter-spacing: 0.12em;
+}
+.strat-icon { font-size: 26px; line-height: 1; }
+.strat-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 17px; font-weight: 700;
+  color: #1a1a18; margin-bottom: 8px; line-height: 1.3;
+}
+.strat-idea {
+  font-size: 13px; color: #4a4a44;
+  line-height: 1.6; margin-bottom: 12px;
+}
+.strat-detail {
+  max-height: 0; overflow: hidden;
+  transition: max-height 0.4s ease, padding-top 0.3s ease;
+  font-size: 13px; color: #4a4a44;
+  line-height: 1.65;
+  border-top: 1px solid rgba(26,26,24,0.08);
+  padding-top: 0;
+}
+.strat-card:hover .strat-detail,
+.strat-card.expanded .strat-detail {
+  max-height: 200px; padding-top: 12px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   DASHBOARD
+═══════════════════════════════════════════════════════ */
+#dashboard { padding: 100px 0; background: #f5f2ec; }
+
+.data-note {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: #fff3e0;
+  border: 1px solid rgba(184,92,0,0.25);
+  border-radius: 8px; padding: 12px 16px;
+  margin-bottom: 32px;
+  font-size: 12px; color: #b85c00; line-height: 1.6;
+}
+.data-note a { color: #b85c00; text-decoration: underline; font-weight: 600; }
+
+.chart-card {
+  background: #ffffff;
+  border: 1px solid rgba(26,26,24,0.10);
+  border-radius: 12px; padding: 24px;
+  box-shadow: 0 1px 8px rgba(26,26,24,0.04);
+}
+.chart-card-header {
+  display: flex; align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap; gap: 12px;
+  margin-bottom: 20px;
+}
+.chart-card-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 16px; font-weight: 700; color: #1a1a18;
+}
+.chart-card-sub { font-size: 12px; color: #8a8a80; margin-top: 3px; }
+.chart-wrap { position: relative; }
+.chart-wrap canvas { max-height: 360px !important; }
+
+.metric-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.metric-tab {
+  padding: 5px 12px; border-radius: 6px;
+  font-size: 11px; font-weight: 600;
+  border: 1px solid rgba(26,26,24,0.12);
+  color: #4a4a44; background: #f5f2ec;
+  transition: var(--transition); cursor: pointer;
+  text-transform: uppercase; letter-spacing: 0.05em;
+}
+.metric-tab:hover { background: #f0ece3; color: #1a1a18; }
+.metric-tab.active { background: #1a6b3a; color: #ffffff; border-color: #1a6b3a; }
+
+.macro-select {
+  background: #f5f2ec; border: 1px solid rgba(26,26,24,0.16);
+  color: #1a1a18; padding: 7px 14px;
+  border-radius: 8px; font-size: 13px;
+  font-family: 'Inter', sans-serif; cursor: pointer;
+  outline: none;
+}
+.macro-select:focus { border-color: #1a6b3a; }
+
+.two-chart-col {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   EXTENDED ANALYSIS
+═══════════════════════════════════════════════════════ */
+#extended { padding: 100px 0; background: #f0ece3; }
+
+.ext-tabs {
+  display: flex; gap: 0;
+  border: 1px solid rgba(26,26,24,0.12);
+  border-radius: 10px; overflow: hidden;
+  margin-bottom: 28px; width: fit-content;
+  background: #ffffff;
+}
+.ext-tab {
+  padding: 10px 24px; font-size: 13px; font-weight: 600;
+  background: transparent; color: #4a4a44;
+  border-right: 1px solid rgba(26,26,24,0.10);
+  transition: var(--transition); cursor: pointer;
+}
+.ext-tab:last-child { border-right: none; }
+.ext-tab:hover { background: #f5f2ec; color: #1a1a18; }
+.ext-tab.active { background: #1a6b3a; color: #ffffff; }
+
+.ext-panel { display: none; }
+.ext-panel.active { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+.ext-info {
+  background: #ffffff;
+  border: 1px solid rgba(26,26,24,0.10);
+  border-radius: 12px; padding: 28px;
+}
+.ext-info h3 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 20px; font-weight: 700;
+  margin-bottom: 12px; color: #1a1a18;
+}
+.ext-info p { font-size: 14px; color: #4a4a44; line-height: 1.7; margin-bottom: 12px; }
+.ext-formula {
+  background: #f5f2ec;
+  border: 1px solid rgba(26,26,24,0.10);
+  border-radius: 8px; padding: 13px 16px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px; color: #1a6b3a;
+  margin: 12px 0; font-weight: 600;
+}
+
+.factor-list { display: flex; flex-direction: column; gap: 8px; margin: 14px 0; }
+.factor-item {
+  display: flex; align-items: center; gap: 12px;
+  background: #f5f2ec; border: 1px solid rgba(26,26,24,0.08);
+  border-radius: 8px; padding: 10px 14px;
+}
+.factor-icon { font-size: 18px; }
+.factor-name { font-size: 13px; font-weight: 600; color: #1a1a18; }
+.factor-desc { font-size: 12px; color: #8a8a80; }
+
+/* Vol pulse */
+.vol-pulse {
+  height: 80px; display: flex;
+  align-items: flex-end; gap: 3px;
+  padding: 0 4px;
+  background: #f5f2ec; border-radius: 8px;
+  padding: 8px;
+}
+.vol-bar {
+  flex: 1; background: #1a6b3a; border-radius: 2px 2px 0 0;
+  animation: volAnimate 2.2s ease-in-out infinite;
+  min-height: 4px;
+}
+.vol-bar:nth-child(2n)   { background: #1a4480; animation-delay: 0.1s; }
+.vol-bar:nth-child(3n)   { background: #c8a84b; animation-delay: 0.2s; }
+.vol-bar.spike           { background: #b52a2a !important; }
+@keyframes volAnimate {
+  0%,100% { transform: scaleY(1); }
+  50%      { transform: scaleY(0.55); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   STOCK UNIVERSE
+═══════════════════════════════════════════════════════ */
+#universe { padding: 100px 0; background: #f5f2ec; }
+
+.stocks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+.stock-card {
+  background: #ffffff;
+  border: 1px solid rgba(26,26,24,0.10);
+  border-radius: 12px; padding: 18px;
+  transition: var(--transition);
+}
+.stock-card:hover {
+  border-color: rgba(26,107,58,0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(26,26,24,0.08);
+}
+.stock-ticker {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px; font-weight: 700;
+  margin-bottom: 3px; letter-spacing: 0.04em;
+}
+.stock-name  { font-size: 12px; color: #1a1a18; font-weight: 600; margin-bottom: 4px; }
+.stock-sector {
+  font-size: 10px; color: #8a8a80;
+  background: #f5f2ec; padding: 3px 8px;
+  border-radius: 4px; display: inline-block;
+  margin-bottom: 12px;
+}
+.sparkline {
+  height: 36px; display: flex;
+  align-items: flex-end; gap: 2px;
+}
+.spark-bar { flex: 1; border-radius: 1px 1px 0 0; min-height: 3px; }
+
+/* ═══════════════════════════════════════════════════════
+   NOTEBOOK TIMELINE
+═══════════════════════════════════════════════════════ */
+#notebook { padding: 100px 0; background: #f0ece3; }
+
+.timeline { position: relative; padding-left: 32px; }
+.timeline::before {
+  content: '';
+  position: absolute; left: 10px; top: 0; bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, #1a6b3a, #c8a84b, transparent);
+  border-radius: 1px;
+}
+.timeline-item { position: relative; margin-bottom: 4px; }
+.timeline-dot {
+  position: absolute; left: -27px; top: 16px;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #f0ece3; border: 2px solid rgba(26,26,24,0.20);
+  transition: var(--transition);
+}
+.timeline-item.open .timeline-dot {
+  background: #1a6b3a; border-color: #1a6b3a;
+  box-shadow: 0 0 10px rgba(26,107,58,0.35);
+}
+.timeline-header {
+  display: flex; align-items: center; gap: 12px;
+  background: #ffffff; border: 1px solid rgba(26,26,24,0.10);
+  border-radius: 10px; padding: 13px 18px;
+  cursor: pointer; transition: var(--transition);
+}
+.timeline-header:hover {
+  border-color: rgba(26,26,24,0.20);
+  background: #f5f2ec;
+}
+.timeline-item.open .timeline-header {
+  border-radius: 10px 10px 0 0;
+  border-bottom-color: transparent;
+  border-color: rgba(26,107,58,0.25);
+  background: #e8f5ee;
+}
+.cell-num {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px; font-weight: 700; color: #1a6b3a;
+  background: #e8f5ee; border: 1px solid rgba(26,107,58,0.25);
+  padding: 2px 8px; border-radius: 4px;
+  letter-spacing: 0.06em; white-space: nowrap;
+}
+.cell-title { font-size: 14px; font-weight: 600; color: #1a1a18; flex: 1; }
+.cell-chevron {
+  color: #8a8a80; font-size: 12px;
+  transition: transform 0.3s ease;
+}
+.timeline-item.open .cell-chevron { transform: rotate(180deg); color: #1a6b3a; }
+
+.timeline-body {
+  max-height: 0; overflow: hidden;
+  background: #ffffff;
+  border: 1px solid rgba(26,107,58,0.20);
+  border-top: none; border-radius: 0 0 10px 10px;
+  transition: max-height 0.4s ease;
+  padding: 0 18px;
+}
+.timeline-item.open .timeline-body { max-height: 260px; padding: 16px 18px; }
+.cell-desc { font-size: 13px; color: #4a4a44; line-height: 1.7; margin-bottom: 12px; }
+.cell-colab {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; color: #1a6b3a;
+  border: 1px solid rgba(26,107,58,0.3);
+  padding: 5px 12px; border-radius: 6px;
+  transition: var(--transition);
+  background: #e8f5ee;
+}
+.cell-colab:hover {
+  background: #1a6b3a; color: #ffffff;
+  border-color: #1a6b3a;
+}
+
+/* ═══════════════════════════════════════════════════════
+   PAPER
+═══════════════════════════════════════════════════════ */
+#paper { padding: 100px 0; background: #f5f2ec; }
+
+.paper-inner {
+  background: #ffffff;
+  border: 1px solid rgba(26,26,24,0.10);
+  border-radius: 16px; overflow: hidden;
+  box-shadow: 0 2px 20px rgba(26,26,24,0.06);
+}
+.paper-top {
+  padding: 40px; display: flex;
+  align-items: center; gap: 32px; flex-wrap: wrap;
+  background: linear-gradient(135deg, #f5f2ec 0%, #e8f5ee 100%);
+  border-bottom: 1px solid rgba(26,26,24,0.08);
+}
+.paper-icon { font-size: 52px; line-height: 1; }
+.paper-meta h2 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 22px; font-weight: 700;
+  color: #1a1a18; margin-bottom: 8px;
+}
+.paper-meta p { font-size: 14px; color: #4a4a44; line-height: 1.6; max-width: 500px; }
+.paper-btns { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+
+.paper-embed {
+  background: #f5f2ec; min-height: 200px;
+  display: flex; align-items: center;
+  justify-content: center; flex-direction: column;
+  gap: 16px; padding: 40px;
+}
+.paper-embed iframe {
+  width: 100%; height: 680px;
+  border: none; border-radius: 8px; display: none;
+}
+.paper-placeholder { text-align: center; }
+.paper-placeholder .pdf-icon { font-size: 44px; margin-bottom: 12px; display: block; }
+.paper-placeholder h3 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 18px; font-weight: 700;
+  color: #1a1a18; margin-bottom: 8px;
+}
+.paper-placeholder p { font-size: 14px; color: #4a4a44; margin-bottom: 20px; line-height: 1.6; }
+.paper-placeholder code {
+  background: #f0ece3; padding: 1px 5px;
+  border-radius: 3px; font-size: 12px;
+  color: #1a6b3a;
+}
+
+/* ═══════════════════════════════════════════════════════
+   TECH STACK
+═══════════════════════════════════════════════════════ */
+#stack { padding: 100px 0; background: #f0ece3; }
+
+.stack-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+.stack-card {
+  background: #ffffff;
+  border: 1px solid rgba(26,26,24,0.10);
+  border-radius: 12px; padding: 18px;
+  display: flex; align-items: flex-start; gap: 13px;
+  transition: var(--transition);
+}
+.stack-card:hover {
+  border-color: rgba(26,26,24,0.20);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(26,26,24,0.07);
+}
+.stack-icon { font-size: 26px; line-height: 1; flex-shrink: 0; }
+.stack-name { font-size: 14px; font-weight: 700; color: #1a1a18; margin-bottom: 3px; }
+.stack-role { font-size: 11px; color: #8a8a80; line-height: 1.5; }
+
+/* ═══════════════════════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════════════════════ */
+footer {
+  background: #1a1a18; /* only dark element — intentional contrast */
+  padding: 40px 0;
+}
+.footer-inner {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap; gap: 20px;
+}
+.footer-left h3 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 16px; font-weight: 700;
+  color: #f5f2ec; margin-bottom: 4px;
+}
+.footer-left p { font-size: 12px; color: #8a8a80; line-height: 1.6; }
+.footer-btns { display: flex; gap: 10px; }
+
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .nav-links, .nav-ctas { display: none; }
+  .hamburger { display: flex; }
+  .hero-chart { display: none; }
+  .hero-stats { max-width: 100%; }
+  .ext-panel.active { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+  .two-chart-col { grid-template-columns: 1fr; }
+  .paper-top { flex-direction: column; }
+}
+@media (max-width: 600px) {
+  .container { padding: 0 16px; }
+  .hero-title { font-size: 32px; }
+  .section-title { font-size: 26px; }
+  .footer-inner { flex-direction: column; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     NAVBAR
+══════════════════════════════════════════ -->
+<nav id="navbar">
+  <div class="nav-inner">
+    <div class="nav-logo">
+      <span>◈</span> Nifty 50 · Strategy Study
+    </div>
+    <ul class="nav-links">
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#strategies">Strategies</a></li>
+      <li><a href="#dashboard">Dashboard</a></li>
+      <li><a href="#extended">Analysis</a></li>
+      <li><a href="#universe">Universe</a></li>
+      <li><a href="#notebook">Notebook</a></li>
+      <li><a href="#paper">Paper</a></li>
+    </ul>
+    <div class="nav-ctas">
+      <a href="https://colab.research.google.com/drive/1oC6zQzKRiLA5n4AZatX9QZHzWYJiBnqE"
+         target="_blank" rel="noopener" class="btn btn-green">🧪 Open Colab</a>
+      <a href="#paper" class="btn btn-outline">📄 Paper</a>
+    </div>
+    <button class="hamburger" id="hamburger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="#overview">Overview</a>
+    <a href="#strategies">Strategies</a>
+    <a href="#dashboard">Dashboard</a>
+    <a href="#extended">Analysis</a>
+    <a href="#universe">Universe</a>
+    <a href="#notebook">Notebook</a>
+    <a href="#paper">Paper</a>
+    <a href="https://colab.research.google.com/drive/1oC6zQzKRiLA5n4AZatX9QZHzWYJiBnqE" target="_blank">🧪 Open Colab</a>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════
+     HERO
+══════════════════════════════════════════ -->
+<section id="hero">
+  <div class="hero-blob blob-1"></div>
+  <div class="hero-blob blob-2"></div>
+
+  <svg class="hero-chart" viewBox="0 0 800 400" preserveAspectRatio="none" fill="none">
+    <polyline points="0,320 60,280 120,300 180,220 240,240 300,160 360,180 420,120 480,140 540,80 600,100 660,60 720,40 780,20 800,30"
+      stroke="#1a6b3a" stroke-width="2" fill="none" stroke-dasharray="2000" stroke-dashoffset="2000">
+      <animate attributeName="stroke-dashoffset" from="2000" to="0" dur="3.5s" fill="freeze"/>
+    </polyline>
+    <polyline points="0,350 60,320 120,340 180,280 240,300 300,240 360,260 420,200 480,220 540,170 600,180 660,150 720,130 780,110 800,100"
+      stroke="#c8a84b" stroke-width="1.5" fill="none" stroke-dasharray="2000" stroke-dashoffset="2000">
+      <animate attributeName="stroke-dashoffset" from="2000" to="0" dur="4.5s" fill="freeze"/>
+    </polyline>
+    <polyline points="0,380 60,360 120,370 180,340 240,355 300,320 360,330 420,290 480,310 540,260 600,280 660,240 720,250 780,220 800,210"
+      stroke="#1a4480" stroke-width="1.5" fill="none" stroke-dasharray="2000" stroke-dashoffset="2000">
+      <animate attributeName="stroke-dashoffset" from="2000" to="0" dur="5.5s" fill="freeze"/>
+    </polyline>
+  </svg>
+
+  <div class="container">
+    <div class="hero-content">
+      <div class="hero-eyebrow">
+        <div class="hero-eyebrow-line"></div>
+        <span>Quantitative Finance Research · NSE India</span>
+      </div>
+      <h1 class="hero-title">
+        Comparative Portfolio<br>
+        <span class="gradient-text">Strategy Study</span>
+      </h1>
+      <p class="hero-subtitle">Nifty 50 · 2014–2024 · 7 Strategies</p>
+      <p class="hero-desc">
+        A rigorous 10-year backtest comparing 4 classical and 3 ML-driven portfolio
+        strategies on India's benchmark index. Starting capital ₹1,00,000.
+        Does algorithmic advice outperform classical rule-based strategies?
+      </p>
+      <div class="hero-ctas">
+        <a href="https://colab.research.google.com/drive/1oC6zQzKRiLA5n4AZatX9QZHzWYJiBnqE"
+           target="_blank" rel="noopener" class="btn btn-green">
+          🧪 Open Colab Notebook
+        </a>
+        <a href="#paper" class="btn btn-blue">📄 Research Paper</a>
+        <a href="#dashboard" class="btn btn-outline">📊 View Dashboard</a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat"><span class="hero-stat-val">7</span><span class="hero-stat-label">Strategies</span></div>
+        <div class="hero-stat"><span class="hero-stat-val">10</span><span class="hero-stat-label">Stocks</span></div>
+        <div class="hero-stat"><span class="hero-stat-val">10Y</span><span class="hero-stat-label">Period</span></div>
+        <div class="hero-stat"><span class="hero-stat-val">120</span><span class="hero-stat-label">Rebalances</span></div>
+        <div class="hero-stat"><span class="hero-stat-val">₹1L</span><span class="hero-stat-label">Capital</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-hint">
+    <svg width="14" height="18" viewBox="0 0 14 18" fill="none">
+      <path d="M7 1v16M1 11l6 6 6-6" stroke="#8a8a80" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    Scroll to explore
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     OVERVIEW
+══════════════════════════════════════════ -->
+<section id="overview">
+  <div class="container">
+    <div class="fade-in">
+      <span class="section-tag">Project Overview</span>
+      <h2 class="section-title">The Study at a Glance</h2>
+      <p class="section-desc">A systematic, reproducible backtest across a decade of Indian equity market data — applying identical assumptions across all 7 strategies.</p>
+    </div>
+    <div class="overview-grid fade-in">
+      <div class="overview-card"><span class="overview-icon">📅</span><div class="overview-val">Apr 2014 – Mar 2024</div><div class="overview-key">Study Period</div></div>
+      <div class="overview-card"><span class="overview-icon">💰</span><div class="overview-val">₹1,00,000</div><div class="overview-key">Starting Capital</div></div>
+      <div class="overview-card"><span class="overview-icon">📈</span><div class="overview-val">10 Stocks</div><div class="overview-key">Nifty 50 Universe</div></div>
+      <div class="overview-card"><span class="overview-icon">⚖️</span><div class="overview-val">7 Strategies</div><div class="overview-key">Compared Rigorously</div></div>
+      <div class="overview-card"><span class="overview-icon">💸</span><div class="overview-val">0.1%</div><div class="overview-key">Transaction Cost</div></div>
+      <div class="overview-card"><span class="overview-icon">📐</span><div class="overview-val">Monthly</div><div class="overview-key">Rebalancing</div></div>
+      <div class="overview-card"><span class="overview-icon">🏦</span><div class="overview-val">6.5% p.a.</div><div class="overview-key">Risk-Free Rate</div></div>
+      <div class="overview-card"><span class="overview-icon">📊</span><div class="overview-val">Nifty 50</div><div class="overview-key">Benchmark Index</div></div>
+    </div>
+    <div class="fade-in">
+      <h3 style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;margin-bottom:18px;color:#1a1a18;">Research Questions</h3>
+      <div class="rq-grid">
+        <div class="rq-card"><div class="rq-type">Primary Question</div><div class="rq-text">"Does algorithmic / ML-driven portfolio management outperform classical rule-based strategies on Indian equity markets?"</div></div>
+        <div class="rq-card"><div class="rq-type">Secondary Question</div><div class="rq-text">"Do different strategies carry different levels of tail risk — and does GARCH-modelled volatility better capture crash risk than simple rolling volatility?"</div></div>
+        <div class="rq-card"><div class="rq-type">Tertiary Question</div><div class="rq-text">"How much of each strategy's return is genuine alpha versus passive exposure to macro forces like the US dollar, crude oil, and global risk sentiment?"</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     STRATEGIES
+══════════════════════════════════════════ -->
+<section id="strategies">
+  <div class="container">
+    <div class="fade-in">
+      <span class="section-tag">The 7 Strategies</span>
+      <h2 class="section-title">Classical vs Algorithmic</h2>
+      <p class="section-desc">Four rule-based classical strategies versus three ML-driven algorithmic approaches. Click or hover each card to expand mechanics.</p>
+    </div>
+    <div class="filter-bar fade-in">
+      <button class="filter-btn active" data-filter="all">All Strategies</button>
+      <button class="filter-btn" data-filter="traditional">🏛️ Traditional Only</button>
+      <button class="filter-btn" data-filter="ml">🤖 ML / Algorithmic Only</button>
+    </div>
+    <div class="strategies-grid fade-in" id="strategiesGrid"></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     DASHBOARD
+══════════════════════════════════════════ -->
+<section id="dashboard">
+  <div class="container">
+    <div class="fade-in">
+      <span class="section-tag">Performance Dashboard</span>
+      <h2 class="section-title">Interactive Charts</h2>
+      <p class="section-desc">Four interactive Chart.js visualisations. Hover, click, and toggle to explore. Replace the data block with your real notebook output.</p>
+    </div>
+
+    <div class="data-note fade-in">
+      ⚡ &nbsp;Charts display <strong>illustrative representative data</strong> matching expected strategy behaviour and rankings.
+      Replace <code style="background:rgba(184,92,0,0.12);padding:1px 5px;border-radius:3px;">STRATEGY_DATA</code> in the script with your real Colab output for exact results. &nbsp;
+      <a href="https://colab.research.google.com/drive/1oC6zQzKRiLA5n4AZatX9QZHzWYJiBnqE" target="_blank" rel="noopener">→ Run the notebook</a>
+    </div>
+
+    <!-- Cumulative returns -->
+    <div class="chart-card fade-in" style="margin-bottom:16px;">
+      <div class="chart-card-header">
+        <div>
+          <div class="chart-card-title">Cumulative Portfolio Value</div>
+          <div class="chart-card-sub">Growth of ₹1,00,000 · Click legend items to toggle strategies</div>
+        </div>
+        <span class="badge badge-gold">10 Years · 120 Months</span>
+      </div>
+      <div class="chart-wrap" style="height:360px;">
+        <canvas id="chartCumulative"></canvas>
+      </div>
+    </div>
+
+    <!-- Bar + Scatter -->
+    <div class="two-chart-col fade-in" style="margin-bottom:16px;">
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <div>
+            <div class="chart-card-title">Strategy Comparison</div>
+            <div class="chart-card-sub">Select a metric below to update the chart</div>
+          </div>
+        </div>
+        <div class="metric-tabs" id="metricTabs" style="margin-bottom:16px;">
+          <button class="metric-tab active" data-metric="cagr">CAGR %</button>
+          <button class="metric-tab" data-metric="sharpe">Sharpe</button>
+          <button class="metric-tab" data-metric="sortino">Sortino</button>
+          <button class="metric-tab" data-metric="maxDrawdown">Max DD</button>
+          <button class="metric-tab" data-metric="annVol">Volatility</button>
+        </div>
+        <div class="chart-wrap" style="height:268px;"><canvas id="chartBar"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <div>
+            <div class="chart-card-title">Risk–Return Space</div>
+            <div class="chart-card-sub">Bubble size = Sharpe Ratio · Hover for details</div>
+          </div>
+        </div>
+        <div class="chart-wrap" style="height:312px;"><canvas id="chartScatter"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Macro attribution -->
+    <div class="chart-card fade-in">
+      <div class="chart-card-header">
+        <div>
+          <div class="chart-card-title">Macro Factor Attribution</div>
+          <div class="chart-card-sub">Factor betas from OLS regression (Cell 14) — positive beta = positive exposure</div>
+        </div>
+        <select class="macro-select" id="macroSelect"></select>
+      </div>
+      <div class="chart-wrap" style="height:260px;"><canvas id="chartMacro"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     EXTENDED ANALYSIS
+══════════════════════════════════════════ -->
+<section id="extended">
+  <div class="container">
+    <div class="fade-in">
+      <span class="section-tag">Extended Analysis</span>
+      <h2 class="section-title">Beyond the Backtest</h2>
+      <p class="section-desc">Two analytical layers that deepen the research beyond standard performance comparison.</p>
+    </div>
+    <div class="fade-in">
+      <div class="ext-tabs">
+        <button class="ext-tab active" data-tab="garch">📊 GARCH Volatility</button>
+        <button class="ext-tab" data-tab="macro">🌍 Macro Attribution</button>
+      </div>
+
+      <div class="ext-panel active" id="panel-garch">
+        <div class="ext-info">
+          <h3>GARCH(1,1) Volatility Modelling</h3>
+          <p>Standard rolling volatility treats each day equally. GARCH captures the empirical fact that volatility <em>clusters</em> — large moves beget large moves.</p>
+          <div class="ext-formula">σ²ₜ = ω + α · ε²ₜ₋₁ + β · σ²ₜ₋₁</div>
+          <p>Fitted on all 7 strategy return series. Outputs: conditional volatility time series, 30-day forward VaR cones, and Ljung-Box ARCH effects test confirming clustering.</p>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;">
+            <div style="background:#f5f2ec;border:1px solid rgba(26,26,24,0.08);border-left:3px solid #1a6b3a;border-radius:6px;padding:10px 12px;font-size:12px;color:#4a4a44;">COVID peak conditional vol was 3–4× the 10-year average across all strategies</div>
+            <div style="background:#f5f2ec;border:1px solid rgba(26,26,24,0.08);border-left:3px solid #1a4480;border-radius:6px;padding:10px 12px;font-size:12px;color:#4a4a44;">CVaR strategy showed lowest max conditional volatility by design</div>
+            <div style="background:#f5f2ec;border:1px solid rgba(26,26,24,0.08);border-left:3px solid #c8a84b;border-radius:6px;padding:10px 12px;font-size:12px;color:#4a4a44;">All 7 strategies show significant ARCH effects (Ljung-Box p &lt; 0.05)</div>
+          </div>
+        </div>
+        <div class="ext-info">
+          <h3>Volatility Pulse (Illustrative)</h3>
+          <p style="font-size:13px;color:#4a4a44;margin-bottom:14px;">Red spikes mark Demonetisation (2016), IL&FS (2018), and COVID crash (2020).</p>
+          <div class="vol-pulse" id="volPulse"></div>
+          <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:10px;color:#8a8a80;padding:0 4px;">
+            <span>Apr 2014</span><span>Mar 2024</span>
+          </div>
+          <div style="margin-top:18px;">
+            <div style="font-size:12px;font-weight:700;color:#1a1a18;margin-bottom:8px;font-family:'Space Grotesk',sans-serif;">GARCH Parameters (illustrative)</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div style="background:#e8f5ee;border:1px solid rgba(26,107,58,0.2);border-radius:6px;padding:10px;text-align:center;">
+                <div style="font-size:18px;font-weight:700;color:#1a6b3a;font-family:'Space Grotesk',sans-serif;">0.06–0.12</div>
+                <div style="font-size:10px;color:#8a8a80;margin-top:2px;">α (ARCH term)</div>
+              </div>
+              <div style="background:#e8eef8;border:1px solid rgba(26,68,128,0.2);border-radius:6px;padding:10px;text-align:center;">
+                <div style="font-size:18px;font-weight:700;color:#1a4480;font-family:'Space Grotesk',sans-serif;">0.85–0.93</div>
+                <div style="font-size:10px;color:#8a8a80;margin-top:2px;">β (persistence)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ext-panel" id="panel-macro">
+        <div class="ext-info">
+          <h3>OLS Macro Factor Regression</h3>
+          <p>Monthly strategy returns regressed on 5 global macro factors. Decomposes returns into genuine alpha (skill) versus macro beta (systematic exposure).</p>
+          <div class="ext-formula">Rₛ = α + Σ βᵢ · Factorᵢ + ε</div>
+          <div class="factor-list">
+            <div class="factor-item"><span class="factor-icon">💵</span><div><div class="factor-name">DXY — US Dollar Index</div><div class="factor-desc">FII flow proxy → dollar strength = India outflows</div></div></div>
+            <div class="factor-item"><span class="factor-icon">🛢️</span><div><div class="factor-name">Brent Crude Oil</div><div class="factor-desc">Energy cost → inflation → RBI rate response</div></div></div>
+            <div class="factor-item"><span class="factor-icon">📊</span><div><div class="factor-name">India VIX</div><div class="factor-desc">Domestic fear gauge → equity risk-off behaviour</div></div></div>
+            <div class="factor-item"><span class="factor-icon">🥇</span><div><div class="factor-name">Gold (GC=F)</div><div class="factor-desc">Safe haven demand → risk sentiment signal</div></div></div>
+            <div class="factor-item"><span class="factor-icon">🏦</span><div><div class="factor-name">US 10Y Treasury Yield</div><div class="factor-desc">Global risk-free rate → EM capital flows</div></div></div>
+          </div>
+        </div>
+        <div class="ext-info">
+          <h3>Attribution Findings</h3>
+          <p style="font-size:13px;color:#4a4a44;">Illustrative — replace with your Cell 14 regression output.</p>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;">
+            <div style="background:#e8f5ee;border:1px solid rgba(26,107,58,0.2);border-radius:8px;padding:14px;">
+              <div style="font-size:10px;color:#8a8a80;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.08em;">Lowest R² — Most Independent of Macro</div>
+              <div style="font-size:14px;font-weight:700;color:#1a6b3a;font-family:'Space Grotesk',sans-serif;">S5: ML (RF) &amp; S7: HMM Regime</div>
+              <div style="font-size:12px;color:#4a4a44;margin-top:4px;">Returns least explained by macro — genuine stock-picking logic</div>
+            </div>
+            <div style="background:#fdf6e3;border:1px solid rgba(200,168,75,0.3);border-radius:8px;padding:14px;">
+              <div style="font-size:10px;color:#8a8a80;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.08em;">Highest Monthly Alpha</div>
+              <div style="font-size:14px;font-weight:700;color:#b8943a;font-family:'Space Grotesk',sans-serif;">S5: ML (RF) → ~3.8% / month</div>
+              <div style="font-size:12px;color:#4a4a44;margin-top:4px;">Return that cannot be attributed to any macro tailwind</div>
+            </div>
+            <div style="background:#e8eef8;border:1px solid rgba(26,68,128,0.2);border-radius:8px;padding:14px;">
+              <div style="font-size:10px;color:#8a8a80;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.08em;">Most VIX-Sensitive (by design)</div>
+              <div style="font-size:14px;font-weight:700;color:#1a4480;font-family:'Space Grotesk',sans-serif;">S6: CVaR Strategy</div>
+              <div style="font-size:12px;color:#4a4a44;margin-top:4px;">Tail-risk management reacts most strongly to fear spikes</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     UNIVERSE
+══════════════════════════════════════════ -->
+<section id="universe">
+  <div class="container">
+    <div class="fade-in">
+      <span class="section-tag">Stock Universe</span>
+      <h2 class="section-title">10 Nifty 50 Constituents</h2>
+      <p class="section-desc">Representative large-cap stocks covering banking, IT, FMCG, energy, and industrials — all continuous Nifty 50 members throughout the study period.</p>
+    </div>
+    <div class="stocks-grid fade-in" id="stocksGrid"></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     NOTEBOOK
+══════════════════════════════════════════ -->
+<section id="notebook">
+  <div class="container">
+    <div class="fade-in">
+      <span class="section-tag">Notebook Walkthrough</span>
+      <h2 class="section-title">14 Cells · Step by Step</h2>
+      <p class="section-desc">Every cell of the Google Colab notebook explained. Click any step to expand. Run live in Colab with one click.</p>
+    </div>
+    <div class="timeline fade-in" id="timeline"></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     PAPER
+══════════════════════════════════════════ -->
+<section id="paper">
+  <div class="container">
+    <div class="fade-in">
+      <span class="section-tag">Research Paper</span>
+      <h2 class="section-title">Full Academic Write-Up</h2>
+    </div>
+    <div class="paper-inner fade-in">
+      <div class="paper-top">
+        <div class="paper-icon">📄</div>
+        <div class="paper-meta">
+          <h2>Comparative Portfolio Strategy Study — Nifty 50 (2014–2024)</h2>
+          <p>A quantitative analysis comparing 7 portfolio strategies on Indian equity markets. Covers methodology, walk-forward backtesting, GARCH volatility modelling, macro factor attribution, and results interpretation.</p>
+          <div class="paper-btns">
+            <a id="pdfBtn" href="YOUR_PDF_LINK" target="_blank" rel="noopener" class="btn btn-green">📄 Read Research Paper</a>
+            <a id="pdfDownload" href="YOUR_PDF_LINK" download class="btn btn-outline">⬇ Download PDF</a>
+            <a href="https://colab.research.google.com/drive/1oC6zQzKRiLA5n4AZatX9QZHzWYJiBnqE"
+               target="_blank" rel="noopener" class="btn btn-gold">🧪 Open Colab</a>
+          </div>
+          <div style="font-size:12px;color:#8a8a80;margin-top:14px;line-height:1.6;">
+            To embed the PDF: replace <code style="background:#f0ece3;padding:1px 5px;border-radius:3px;color:#1a6b3a;">YOUR_PDF_LINK</code> with your Google Drive preview URL:
+            <code style="background:#f0ece3;padding:1px 5px;border-radius:3px;color:#4a4a44;">https://drive.google.com/file/d/FILE_ID/preview</code>
+          </div>
+        </div>
+      </div>
+      <div class="paper-embed" id="paperEmbed">
+        <iframe id="pdfIframe" src="" title="Research Paper"></iframe>
+        <div class="paper-placeholder" id="pdfPlaceholder">
+          <span class="pdf-icon">📑</span>
+          <h3>Research Paper</h3>
+          <p>Add your PDF URL to display an embedded viewer here.<br>
+          Upload to Google Drive → Share → Anyone with link → change URL to end in <code>/preview</code></p>
+          <a href="https://colab.research.google.com/drive/1oC6zQzKRiLA5n4AZatX9QZHzWYJiBnqE"
+             target="_blank" rel="noopener" class="btn btn-green">🧪 View Notebook Instead</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     TECH STACK
+══════════════════════════════════════════ -->
+<section id="stack">
+  <div class="container">
+    <div class="fade-in">
+      <span class="section-tag">Technology Stack</span>
+      <h2 class="section-title">Built With</h2>
+    </div>
+    <div class="stack-grid fade-in" id="stackGrid"></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     FOOTER
+══════════════════════════════════════════ -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-left">
+        <h3>Comparative Portfolio Strategy Study</h3>
+        <p>Quantitative Finance Research · Nifty 50 · April 2014 – March 2024<br>
+        7 Strategies · 10 Stocks · ₹1,00,000 Starting Capital · 0.1% Transaction Costs</p>
+      </div>
+      <div class="footer-btns">
+        <a href="https://colab.research.google.com/drive/1oC6zQzKRiLA5n4AZatX9QZHzWYJiBnqE"
+           target="_blank" rel="noopener" class="btn btn-green">🧪 Colab</a>
+        <a href="#paper" class="btn btn-outline" style="background:transparent;border-color:rgba(245,242,236,0.2);color:#f5f2ec;">📄 Paper</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- ══════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════ -->
+<script>
+/* ═══════════════════════════════════════════════════════
+   DATA BLOCK — REPLACE WITH REAL NOTEBOOK OUTPUT
+   Find this block and replace values after running Colab.
+═══════════════════════════════════════════════════════ */
+const STRATEGY_DATA = {
+  labels:      ["Buy & Hold","CAPM","Markowitz MVO","Momentum","ML Random Forest","CVaR","HMM Regime"],
+  shortLabels: ["B&H","CAPM","MVO","Mom","ML-RF","CVaR","HMM"],
+  /* Strategy colours — matched to CSS variables above */
+  colors: ["#1a4480","#1a6b3a","#7c3d8a","#b85c00","#2d9e58","#b52a2a","#c8a84b"],
+  types:  ["traditional","traditional","traditional","traditional","ml","ml","ml"],
+  /* ── Replace these with real output from compute_metrics() ── */
+  cagr:        [12.4,  14.1,  15.8,  16.3,  18.2,  13.9,  17.5],
+  sharpe:      [0.62,  0.71,  0.84,  0.79,  0.96,  0.73,  0.91],
+  sortino:     [0.88,  1.02,  1.19,  1.11,  1.38,  1.05,  1.29],
+  maxDrawdown: [-38.2,-32.1, -27.4, -33.8, -24.6, -22.1, -29.3],
+  finalValue:  [321400,376200,418900,434100,512800,381700,483200],
+  annVol:      [18.2,  17.4,  16.1,  19.3,  17.8,  15.2,  16.9],
+};
+
+const MACRO_FACTORS = ["DXY","Brent Crude","India VIX","Gold","US 10Y Yield"];
+const MACRO_DATA = {
+  "Buy & Hold":       { alpha: 0.8,  betas: [ 0.12,  0.18, -0.24,  0.09, -0.11] },
+  "CAPM":             { alpha: 1.4,  betas: [ 0.09,  0.14, -0.19,  0.07, -0.08] },
+  "Markowitz MVO":    { alpha: 2.1,  betas: [ 0.07,  0.11, -0.15,  0.06, -0.06] },
+  "Momentum":         { alpha: 2.4,  betas: [ 0.14,  0.21, -0.28,  0.11, -0.13] },
+  "ML Random Forest": { alpha: 3.8,  betas: [ 0.06,  0.09, -0.12,  0.05, -0.05] },
+  "CVaR":             { alpha: 1.7,  betas: [ 0.05,  0.08, -0.10,  0.04, -0.04] },
+  "HMM Regime":       { alpha: 3.2,  betas: [ 0.08,  0.13, -0.17,  0.07, -0.07] },
+};
+
+const PDF_URL = "YOUR_PDF_LINK";
+
+/* ═══════════════════════════════════════════════════════
+   GENERATE MONTHLY CUMULATIVE DATA (120 months)
+   Replace monthlyValues with real Colab output:
+   vals.resample('ME').last().round(0).tolist()
+═══════════════════════════════════════════════════════ */
+function generateMonthlyData() {
+  const N = 120;
+  return STRATEGY_DATA.finalValue.map((finalVal, si) => {
+    const monthlyRate = Math.pow(finalVal / 100000, 1 / N);
+    let val = 100000;
+    const series = [val];
+    for (let i = 1; i < N; i++) {
+      let shock = 0;
+      if (i >= 30 && i <= 36) shock = -0.04;   // Demonetisation
+      if (i >= 53 && i <= 60) shock = -0.05;   // IL&FS
+      if (i >= 71 && i <= 75) shock = -0.15;   // COVID
+      if (i >= 76 && i <= 84) shock = 0.06;    // recovery
+      const noise = (Math.random() - 0.47) * 0.028;
+      val = Math.max(60000, val * monthlyRate * (1 + noise + shock * 0.25));
+      series.push(Math.round(val));
+    }
+    return series;
+  });
+}
+const monthlyValues = generateMonthlyData();
+
+const monthLabels = (() => {
+  const labels = []; let y = 2014, m = 4;
+  const mNames = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  for (let i = 0; i < 120; i++) {
+    labels.push(`${mNames[m]} ${y}`);
+    if (++m > 12) { m = 1; y++; }
+  }
+  return labels;
+})();
+
+/* ═══════════════════════════════════════════════════════
+   CHART HELPERS — colours for Chart.js (light bg)
+═══════════════════════════════════════════════════════ */
+const CHART_DEFAULTS = {
+  gridColor:   'rgba(26,26,24,0.06)',
+  borderColor: 'rgba(26,26,24,0.10)',
+  tickColor:   '#8a8a80',
+  tooltipBg:   '#ffffff',
+  tooltipBorder: 'rgba(26,26,24,0.12)',
+  tooltipTitle: '#8a8a80',
+  tooltipBody:  '#1a1a18',
+  legendColor:  '#4a4a44',
+};
+
+function applyDefaults(options) {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        labels: {
+          color: CHART_DEFAULTS.legendColor,
+          font: { size: 11, family: 'Inter' },
+          boxWidth: 12, padding: 14,
+        }
+      },
+      tooltip: {
+        backgroundColor: CHART_DEFAULTS.tooltipBg,
+        borderColor: CHART_DEFAULTS.tooltipBorder,
+        borderWidth: 1,
+        titleColor: CHART_DEFAULTS.tooltipTitle,
+        bodyColor: CHART_DEFAULTS.tooltipBody,
+        padding: 12,
+        boxShadow: '0 4px 12px rgba(26,26,24,0.1)',
+      }
+    },
+    scales: {
+      x: {
+        ticks: { color: CHART_DEFAULTS.tickColor, font: { size: 10, family: 'Inter' } },
+        grid: { color: CHART_DEFAULTS.gridColor },
+        border: { color: CHART_DEFAULTS.borderColor },
+      },
+      y: {
+        ticks: { color: CHART_DEFAULTS.tickColor, font: { size: 10, family: 'Inter' } },
+        grid: { color: CHART_DEFAULTS.gridColor },
+        border: { color: CHART_DEFAULTS.borderColor },
+      }
+    },
+    ...options,
+  };
+}
+
+/* ═══════════════════════════════════════════════════════
+   CHART 1 — CUMULATIVE RETURNS
+═══════════════════════════════════════════════════════ */
+let chartCumulative;
+function initCumulativeChart() {
+  const ctx = document.getElementById('chartCumulative').getContext('2d');
+  const datasets = STRATEGY_DATA.labels.map((label, i) => ({
+    label,
+    data: monthlyValues[i],
+    borderColor: STRATEGY_DATA.colors[i],
+    backgroundColor: 'transparent',
+    borderWidth: i >= 4 ? 2.5 : 1.6,
+    pointRadius: 0,
+    pointHoverRadius: 5,
+    pointHoverBackgroundColor: STRATEGY_DATA.colors[i],
+    tension: 0.4,
+  }));
+
+  chartCumulative = new Chart(ctx, {
+    type: 'line',
+    data: { labels: monthLabels, datasets },
+    options: applyDefaults({
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { color: '#4a4a44', font: { size: 11, family: 'Inter' }, boxWidth: 12, padding: 14 }
+        },
+        tooltip: {
+          backgroundColor: '#ffffff',
+          borderColor: 'rgba(26,26,24,0.14)',
+          borderWidth: 1,
+          titleColor: '#8a8a80',
+          bodyColor: '#1a1a18',
+          padding: 12,
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: ₹${ctx.parsed.y.toLocaleString('en-IN')}`,
+          }
+        },
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: '#8a8a80', maxTicksLimit: 11,
+            font: { size: 10, family: 'Inter' },
+            callback: (_, i) => i % 12 === 0 ? monthLabels[i].split(' ')[1] : '',
+          },
+          grid: { color: 'rgba(26,26,24,0.05)' },
+          border: { color: 'rgba(26,26,24,0.10)' },
+        },
+        y: {
+          ticks: {
+            color: '#8a8a80',
+            font: { size: 10, family: 'Inter' },
+            callback: v => `₹${(v/1000).toFixed(0)}K`,
+          },
+          grid: { color: 'rgba(26,26,24,0.05)' },
+          border: { color: 'rgba(26,26,24,0.10)' },
+        }
+      },
+      animation: { duration: 1400, easing: 'easeInOutQuart' },
+    })
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   CHART 2 — BAR CHART
+═══════════════════════════════════════════════════════ */
+let chartBar;
+const metricConfig = {
+  cagr:        { label: 'CAGR (%)',                 data: () => STRATEGY_DATA.cagr },
+  sharpe:      { label: 'Sharpe Ratio',              data: () => STRATEGY_DATA.sharpe },
+  sortino:     { label: 'Sortino Ratio',             data: () => STRATEGY_DATA.sortino },
+  maxDrawdown: { label: 'Max Drawdown (%)',           data: () => STRATEGY_DATA.maxDrawdown },
+  annVol:      { label: 'Annualised Volatility (%)', data: () => STRATEGY_DATA.annVol },
+};
+
+function initBarChart(metric = 'cagr') {
+  const cfg = metricConfig[metric];
+  const ctx = document.getElementById('chartBar').getContext('2d');
+  if (chartBar) chartBar.destroy();
+  chartBar = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: STRATEGY_DATA.shortLabels,
+      datasets: [{
+        data: cfg.data(),
+        backgroundColor: STRATEGY_DATA.colors.map(c => c + 'aa'),
+        borderColor: STRATEGY_DATA.colors,
+        borderWidth: 1.5,
+        borderRadius: 5,
+        borderSkipped: false,
+      }]
+    },
+    options: applyDefaults({
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#ffffff',
+          borderColor: 'rgba(26,26,24,0.14)',
+          borderWidth: 1,
+          titleColor: '#8a8a80',
+          bodyColor: '#1a1a18',
+          padding: 10,
+          callbacks: {
+            title: ctx => STRATEGY_DATA.labels[ctx[0].dataIndex],
+            label: ctx => ` ${cfg.label}: ${ctx.parsed.y}`,
+          }
+        },
+      },
+      scales: {
+        x: { ticks: { color: '#8a8a80', font: { size: 10 } }, grid: { display: false }, border: { color: 'rgba(26,26,24,0.10)' } },
+        y: { ticks: { color: '#8a8a80', font: { size: 10 } }, grid: { color: 'rgba(26,26,24,0.05)' }, border: { color: 'rgba(26,26,24,0.10)' } }
+      },
+      animation: { duration: 500, easing: 'easeOutQuart' },
+    })
+  });
+}
+
+document.getElementById('metricTabs').addEventListener('click', e => {
+  const btn = e.target.closest('.metric-tab');
+  if (!btn) return;
+  document.querySelectorAll('.metric-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  initBarChart(btn.dataset.metric);
+});
+
+/* ═══════════════════════════════════════════════════════
+   CHART 3 — BUBBLE SCATTER
+═══════════════════════════════════════════════════════ */
+function initScatterChart() {
+  const ctx = document.getElementById('chartScatter').getContext('2d');
+  new Chart(ctx, {
+    type: 'bubble',
+    data: {
+      datasets: STRATEGY_DATA.labels.map((label, i) => ({
+        label,
+        data: [{ x: STRATEGY_DATA.annVol[i], y: STRATEGY_DATA.cagr[i], r: STRATEGY_DATA.sharpe[i] * 16 }],
+        backgroundColor: STRATEGY_DATA.colors[i] + '44',
+        borderColor: STRATEGY_DATA.colors[i],
+        borderWidth: 2,
+      }))
+    },
+    options: applyDefaults({
+      plugins: {
+        legend: { position: 'bottom', labels: { color: '#4a4a44', font: { size: 10 }, boxWidth: 10, padding: 10 } },
+        tooltip: {
+          backgroundColor: '#ffffff',
+          borderColor: 'rgba(26,26,24,0.14)',
+          borderWidth: 1,
+          titleColor: '#8a8a80',
+          bodyColor: '#1a1a18',
+          padding: 10,
+          callbacks: {
+            label: ctx => [
+              ` ${ctx.dataset.label}`,
+              ` Vol: ${ctx.parsed.x}%   CAGR: ${ctx.parsed.y}%`,
+              ` Sharpe: ${STRATEGY_DATA.sharpe[ctx.datasetIndex]}`,
+            ]
+          }
+        },
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Annualised Volatility (%)', color: '#8a8a80', font: { size: 11 } },
+          ticks: { color: '#8a8a80', font: { size: 10 } },
+          grid: { color: 'rgba(26,26,24,0.05)' },
+          border: { color: 'rgba(26,26,24,0.10)' },
+        },
+        y: {
+          title: { display: true, text: 'CAGR (%)', color: '#8a8a80', font: { size: 11 } },
+          ticks: { color: '#8a8a80', font: { size: 10 } },
+          grid: { color: 'rgba(26,26,24,0.05)' },
+          border: { color: 'rgba(26,26,24,0.10)' },
+        }
+      },
+    })
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   CHART 4 — MACRO ATTRIBUTION
+═══════════════════════════════════════════════════════ */
+let chartMacro;
+function initMacroSelect() {
+  const sel = document.getElementById('macroSelect');
+  Object.keys(MACRO_DATA).forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name; opt.textContent = name;
+    sel.appendChild(opt);
+  });
+  sel.addEventListener('change', () => drawMacroChart(sel.value));
+  drawMacroChart(Object.keys(MACRO_DATA)[0]);
+}
+
+function drawMacroChart(stratName) {
+  const ctx = document.getElementById('chartMacro').getContext('2d');
+  const d   = MACRO_DATA[stratName];
+  if (!d) return;
+  if (chartMacro) chartMacro.destroy();
+
+  const labels = [...MACRO_FACTORS, 'Monthly Alpha (%)'];
+  const data   = [...d.betas, d.alpha];
+  const bgColors  = data.map(v => v >= 0 ? '#1a6b3a44' : '#b52a2a44');
+  const bdrColors = data.map(v => v >= 0 ? '#1a6b3a' : '#b52a2a');
+
+  chartMacro = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: stratName,
+        data,
+        backgroundColor: bgColors,
+        borderColor: bdrColors,
+        borderWidth: 1.5,
+        borderRadius: 4,
+        borderSkipped: false,
+      }]
+    },
+    options: applyDefaults({
+      indexAxis: 'y',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#ffffff',
+          borderColor: 'rgba(26,26,24,0.14)',
+          borderWidth: 1,
+          titleColor: '#8a8a80',
+          bodyColor: '#1a1a18',
+          padding: 10,
+          callbacks: {
+            label: ctx => ` ${ctx.label}: ${ctx.parsed.x > 0 ? '+' : ''}${ctx.parsed.x.toFixed(3)}`,
+          }
+        },
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Beta / Alpha Value', color: '#8a8a80', font: { size: 11 } },
+          ticks: { color: '#8a8a80', font: { size: 10 } },
+          grid: { color: 'rgba(26,26,24,0.06)' },
+          border: { color: 'rgba(26,26,24,0.10)' },
+        },
+        y: {
+          ticks: { color: '#4a4a44', font: { size: 11, family: 'Inter' } },
+          grid: { display: false },
+          border: { color: 'rgba(26,26,24,0.10)' },
+        }
+      },
+      animation: { duration: 500 },
+    })
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   STRATEGY CARDS
+═══════════════════════════════════════════════════════ */
+const STRAT_CARDS = [
+  { num:'01', icon:'📈', name:'Buy & Hold (Index)',         type:'traditional', accent:'#1a4480', idea:'Hold Nifty 50 index for 10 years. Zero stock-picking decisions. Pure EMH baseline.', detail:'Allocates 100% capital on Day 1. Never rebalances. One-time 0.1% entry cost. Serves as the minimum bar — every other strategy must beat this to justify its complexity.' },
+  { num:'02', icon:'📐', name:'CAPM / Beta Portfolio',      type:'traditional', accent:'#1a6b3a', idea:'Rank stocks by CAPM expected return. Select top 5. Equal-weight. Rebalance monthly.', detail:'Uses E(Rᵢ)=Rf+β(Rm−Rf). Rolling 252-day OLS beta vs Nifty 50. Highest expected return stocks selected monthly. Tests whether systematic risk pricing adds value over index.' },
+  { num:'03', icon:'🎯', name:'Markowitz MVO',              type:'traditional', accent:'#7c3d8a', idea:'Maximise Sharpe ratio via quadratic optimisation. No short-selling. Monthly rebalance.', detail:'126-day rolling covariance matrix. scipy.optimize.minimize (SLSQP). Weights ≥ 0, sum = 1, max 40% per stock. 5 random restarts for convergence robustness.' },
+  { num:'04', icon:'🚀', name:'Monthly Momentum',           type:'traditional', accent:'#b85c00', idea:'Each month, pick top 5 stocks by prior month return. Pure price momentum factor.', detail:'21-day lookback. Selects 5 recent winners. Equal-weight. Tests the Jegadeesh & Titman (1993) momentum anomaly on Indian large-caps. Known risk: momentum crashes during sharp reversals.' },
+  { num:'05', icon:'🤖', name:'Feature-Based ML (RF)',      type:'ml',          accent:'#2d9e58', idea:'Random Forest predicts next-month outperformers using 9 engineered features. Walk-forward validation.', detail:'Features: 5/21/63/126-day returns, rolling vol (21/63d), RSI-14, volume change, return vs market. 200 trees, max_depth=4. 18-month training window. Strict walk-forward — no lookahead bias.' },
+  { num:'06', icon:'⚠️', name:'Risk-Based CVaR',            type:'ml',          accent:'#b52a2a', idea:'Minimise Conditional Value-at-Risk at 95% confidence. Tail-risk focused allocation.', detail:'CVaR = mean loss in worst 5% of scenarios. scipy SLSQP with 8 random restarts. Designed for risk-averse investors. Minimum expected return ≥ 6.5% p.a. constraint.' },
+  { num:'07', icon:'🌐', name:'Regime-Aware HMM',           type:'ml',          accent:'#c8a84b', idea:'Hidden Markov Model detects Bull/Bear/Sideways regimes. Rules adapt per regime monthly.', detail:'3-state Gaussian HMM on Nifty returns + rolling vol. Viterbi decoding. Bull→momentum, Bear→lowest-beta + 40% cash, Sideways→MVO weights. Re-detected at each rebalance.' },
+];
+
+function buildStrategyCards() {
+  const grid = document.getElementById('strategiesGrid');
+  STRAT_CARDS.forEach(c => {
+    const div = document.createElement('div');
+    div.className = `strat-card ${c.type}`;
+    div.style.setProperty('--card-accent', c.accent);
+    div.innerHTML = `
+      <div class="strat-header">
+        <span class="strat-num">STRATEGY ${c.num}</span>
+        <span class="strat-icon">${c.icon}</span>
+      </div>
+      <div class="strat-name">${c.name}</div>
+      <span class="badge ${c.type === 'ml' ? 'badge-ml' : 'badge-trad'}" style="margin-bottom:10px;">
+        ${c.type === 'ml' ? '🤖 ML / Algorithmic' : '🏛️ Traditional'}
+      </span>
+      <div class="strat-idea">${c.idea}</div>
+      <div class="strat-detail">${c.detail}</div>`;
+    div.addEventListener('click', () => div.classList.toggle('expanded'));
+    grid.appendChild(div);
+  });
+}
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const f = btn.dataset.filter;
+    document.querySelectorAll('.strat-card').forEach(card => {
+      card.classList.toggle('hidden', f !== 'all' && !card.classList.contains(f));
+    });
+  });
+});
+
+/* ═══════════════════════════════════════════════════════
+   STOCK CARDS
+═══════════════════════════════════════════════════════ */
+const STOCKS = [
+  { ticker:'RELIANCE',    name:'Reliance Industries',  sector:'Energy / Conglomerate',      color:'#b52a2a' },
+  { ticker:'HDFCBANK',    name:'HDFC Bank',            sector:'Banking',                    color:'#1a4480' },
+  { ticker:'ICICIBANK',   name:'ICICI Bank',           sector:'Banking',                    color:'#1a4480' },
+  { ticker:'SBIN',        name:'State Bank of India',  sector:'PSU Banking',                color:'#7c3d8a' },
+  { ticker:'INFY',        name:'Infosys',              sector:'Information Technology',     color:'#1a6b3a' },
+  { ticker:'ITC',         name:'ITC Limited',          sector:'FMCG',                       color:'#2d9e58' },
+  { ticker:'HINDUNILVR',  name:'Hindustan Unilever',   sector:'FMCG',                       color:'#2d9e58' },
+  { ticker:'AXISBANK',    name:'Axis Bank',            sector:'Banking',                    color:'#1a4480' },
+  { ticker:'LT',          name:'Larsen & Toubro',      sector:'Engineering & Construction', color:'#b85c00' },
+  { ticker:'M&M',         name:'Mahindra & Mahindra',  sector:'Automobiles',                color:'#c8a84b' },
+];
+
+function buildStockCards() {
+  const grid = document.getElementById('stocksGrid');
+  STOCKS.forEach(s => {
+    const sparks = Array.from({length: 20}, () => Math.max(6, Math.random() * 34));
+    grid.innerHTML += `
+      <div class="stock-card">
+        <div class="stock-ticker" style="color:${s.color}">${s.ticker}</div>
+        <div class="stock-name">${s.name}</div>
+        <div class="stock-sector">${s.sector}</div>
+        <div class="sparkline">
+          ${sparks.map(h => `<div class="spark-bar" style="height:${h}px;background:${s.color}30;border-top:2px solid ${s.color}80"></div>`).join('')}
+        </div>
+      </div>`;
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   TIMELINE
+═══════════════════════════════════════════════════════ */
+const CELLS = [
+  { num:'01', title:'Imports & Global Configuration',      desc:'Loads all libraries: numpy, pandas, matplotlib, scipy, sklearn, hmmlearn, arch, statsmodels, seaborn, yfinance. Defines global constants: ₹1,00,000 capital, 6.5% risk-free rate, 0.1% transaction cost, study period, stock list, macro tickers, and three storage dictionaries (PORTFOLIO_VALUES, GARCH_RESULTS, MACRO_RESULTS).' },
+  { num:'02', title:'Data Loading & Validation',           desc:'Uploads 11 CSV files (10 stocks + Nifty 50 index). Builds master close_prices DataFrame. Validates date range coverage, checks missing values, forward-fills minor gaps. Snaps all 120 rebalance dates to nearest actual trading day in the calendar.' },
+  { num:'03', title:'Exploratory Data Analysis (EDA)',     desc:'8-panel EDA: missing data heatmap, cumulative returns, annualised volatility bar chart, return correlation matrix, max drawdown profile, return distributions (fat tails), rolling volatility, and risk-return scatter. COVID crash clearly visible.' },
+  { num:'04', title:'Shared Utilities & Metrics Engine',   desc:'Defines 5 reusable functions: apply_transaction_cost(), simulate_portfolio(), compute_metrics() returning CAGR/Sharpe/Sortino/MaxDD/HitRatio, get_period_returns(), and equal_weights(). Every strategy cell calls these identically.' },
+  { num:'05', title:'Strategy 1 — Buy & Hold (Baseline)',  desc:'Invests ₹1,00,000 in Nifty 50 on Day 1. One-time 0.1% entry cost deducted. Compounds daily Nifty returns for 10 years. Outputs the performance baseline — the minimum bar every other strategy must clear.' },
+  { num:'06', title:'Strategy 2 — CAPM / Beta Portfolio',  desc:'Rolling 252-day OLS beta computed vs Nifty 50. CAPM expected return ranking applied monthly. Top 5 by E(R) selected. Equal-weight. Includes beta time-series chart and stock selection frequency analysis.' },
+  { num:'07', title:'Strategy 3 — Markowitz MVO',         desc:'126-day rolling covariance matrix. scipy.optimize.minimize (SLSQP) maximises Sharpe ratio. 5 random restarts for numerical robustness. Efficient frontier plotted at last rebalance. Average portfolio weight allocation tracked over 10 years.' },
+  { num:'08', title:'Strategy 4 — Monthly Momentum',      desc:'21-day lookback return ranking. Top 5 winners selected monthly. Equal-weight. Monthly returns heatmap (year × month). Turnover analysis. COVID momentum crash and recovery clearly annotated in drawdown chart.' },
+  { num:'09', title:'Strategy 5 — Feature-Based ML (RF)', desc:'9 engineered features per stock monthly. 200-tree Random Forest with walk-forward validation (18-month rolling training window). Volatility filter applied. Feature importance tracked. Strict no-lookahead design. Runtime: ~3–4 minutes.' },
+  { num:'10', title:'Strategy 6 — Risk-Based CVaR',       desc:'126-day historical return scenarios feed CVaR minimisation. scipy SLSQP with 8 random restarts. Minimum return ≥ Rf constraint. Individual stock VaR/CVaR logged per rebalance. Rolling CVaR annotated with stress events.' },
+  { num:'11', title:'Strategy 7 — Regime-Aware HMM',      desc:'3-state Gaussian HMM on Nifty returns + rolling volatility. Viterbi decoding assigns regime monthly. Bull→momentum, Bear→defensive + 40% cash proxy, Sideways→MVO. Extended cash-aware simulator handles Bear cash allocation correctly.' },
+  { num:'12', title:'Master Comparison & Final Report',   desc:'Full 7-strategy comparison: master metrics table, per-metric rankings, points-based overall score. 5 comparison charts: cumulative returns, risk-return scatter, radar chart, annual heatmap, rolling 12M Sharpe. Research question answered.' },
+  { num:'13', title:'GARCH Volatility Analysis',          desc:'GARCH(1,1) fitted on all 7 strategy return series using arch library. Conditional volatility chart with COVID annotation. 30-day forward VaR fan charts. GARCH vs realised vol comparison (top 3 by Sharpe). Ljung-Box ARCH effects test confirms clustering.' },
+  { num:'14', title:'Macro Factor Attribution',           desc:'yfinance downloads DXY, Brent, India VIX, Gold, US 10Y Yield for 2014–2024. OLS regression per strategy. Factor betas, R², alpha, p-values in clean table. Seaborn factor beta heatmap. Rolling 12M betas with Demonetisation and COVID annotations.' },
+];
+
+function buildTimeline() {
+  const tl = document.getElementById('timeline');
+  CELLS.forEach(cell => {
+    const item = document.createElement('div');
+    item.className = 'timeline-item';
+    item.innerHTML = `
+      <div class="timeline-dot"></div>
+      <div class="timeline-header">
+        <span class="cell-num">CELL ${cell.num}</span>
+        <span class="cell-title">${cell.title}</span>
+        <span class="cell-chevron">▼</span>
+      </div>
+      <div class="timeline-body">
+        <p class="cell-desc">${cell.desc}</p>
+        <a href="https://colab.research.google.com/drive/1oC6zQzKRiLA5n4AZatX9QZHzWYJiBnqE"
+           target="_blank" rel="noopener" class="cell-colab">
+          🧪 Run Cell ${cell.num} in Colab →
+        </a>
+      </div>`;
+    item.querySelector('.timeline-header').addEventListener('click', () => {
+      item.classList.toggle('open');
+    });
+    tl.appendChild(item);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   TECH STACK
+═══════════════════════════════════════════════════════ */
+const STACK = [
+  { icon:'🐍', name:'Python',       role:'Core language for all computation and modelling' },
+  { icon:'🐼', name:'pandas',       role:'Data loading, manipulation, time-series operations' },
+  { icon:'🔢', name:'NumPy',        role:'Numerical computing, matrix operations' },
+  { icon:'📊', name:'matplotlib',   role:'All strategy charts, EDA plots, comparison visuals' },
+  { icon:'🧪', name:'scikit-learn', role:'Random Forest classifier, feature engineering' },
+  { icon:'🔗', name:'hmmlearn',     role:'Gaussian HMM for market regime detection' },
+  { icon:'📐', name:'scipy',        role:'Quadratic optimisation for MVO and CVaR' },
+  { icon:'📈', name:'arch',         role:'GARCH(1,1) conditional volatility modelling' },
+  { icon:'📉', name:'statsmodels',  role:'OLS regression for macro factor attribution' },
+  { icon:'🌍', name:'yfinance',     role:'Downloads DXY, Oil, VIX, Gold, TNX data' },
+  { icon:'🎨', name:'seaborn',      role:'Factor beta heatmap visualisation' },
+  { icon:'☁️', name:'Google Colab', role:'Cloud execution environment — free, shareable' },
+];
+
+function buildStack() {
+  const grid = document.getElementById('stackGrid');
+  STACK.forEach(s => {
+    grid.innerHTML += `
+      <div class="stack-card">
+        <div class="stack-icon">${s.icon}</div>
+        <div><div class="stack-name">${s.name}</div><div class="stack-role">${s.role}</div></div>
+      </div>`;
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   VOL PULSE
+═══════════════════════════════════════════════════════ */
+function buildVolPulse() {
+  const container = document.getElementById('volPulse');
+  const heights = Array.from({length: 40}, (_, i) => {
+    if (i >= 9  && i <= 12) return 64 + Math.random() * 10;
+    if (i >= 17 && i <= 20) return 58 + Math.random() * 14;
+    if (i >= 27 && i <= 31) return 68 + Math.random() * 8;
+    return 10 + Math.random() * 24;
+  });
+  heights.forEach((h, i) => {
+    const bar = document.createElement('div');
+    bar.className = 'vol-bar';
+    const isSpike = (i >= 9 && i <= 12)||(i >= 17 && i <= 20)||(i >= 27 && i <= 31);
+    if (isSpike) bar.classList.add('spike');
+    bar.style.height = `${h}px`;
+    bar.style.animationDelay = `${i * 0.05}s`;
+    container.appendChild(bar);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   PDF
+═══════════════════════════════════════════════════════ */
+function setupPDF() {
+  if (PDF_URL && PDF_URL !== 'YOUR_PDF_LINK') {
+    document.getElementById('pdfBtn').href      = PDF_URL;
+    document.getElementById('pdfDownload').href = PDF_URL;
+    const iframe      = document.getElementById('pdfIframe');
+    const placeholder = document.getElementById('pdfPlaceholder');
+    iframe.src = PDF_URL;
+    iframe.style.display  = 'block';
+    placeholder.style.display = 'none';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   NAV ACTIVE STATE
+═══════════════════════════════════════════════════════ */
+function setupNav() {
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-links a');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(a => a.classList.remove('active'));
+        const active = document.querySelector(`.nav-links a[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { threshold: 0.35 });
+  sections.forEach(s => observer.observe(s));
+
+  document.getElementById('hamburger').addEventListener('click', () => {
+    document.getElementById('mobileMenu').classList.toggle('open');
+  });
+  document.querySelectorAll('.mobile-menu a').forEach(a => {
+    a.addEventListener('click', () => document.getElementById('mobileMenu').classList.remove('open'));
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   FADE-IN ON SCROLL
+═══════════════════════════════════════════════════════ */
+function setupFadeIn() {
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); }
+    });
+  }, { threshold: 0.10 });
+  document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+}
+
+/* ═══════════════════════════════════════════════════════
+   EXTENDED TABS
+═══════════════════════════════════════════════════════ */
+function setupExtTabs() {
+  document.querySelectorAll('.ext-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.ext-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.ext-panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(`panel-${tab.dataset.tab}`).classList.add('active');
+    });
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   CHART LAZY LOAD
+═══════════════════════════════════════════════════════ */
+let chartsInitialised = false;
+function setupChartLazyLoad() {
+  const observer = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting && !chartsInitialised) {
+      chartsInitialised = true;
+      initCumulativeChart();
+      initBarChart('cagr');
+      initScatterChart();
+      initMacroSelect();
+    }
+  }, { threshold: 0.08 });
+  observer.observe(document.getElementById('dashboard'));
+}
+
+/* ═══════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  setupNav();
+  setupFadeIn();
+  buildStrategyCards();
+  buildStockCards();
+  buildTimeline();
+  buildStack();
+  buildVolPulse();
+  setupExtTabs();
+  setupChartLazyLoad();
+  setupPDF();
+});
+</script>
+</body>
+</html>

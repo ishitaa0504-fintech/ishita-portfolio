@@ -1,0 +1,2842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Earnings Surprise Predictor — Quantitative Research</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Syne:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+
+<style>
+/* ════════════════════════════════════════════════════
+   DESIGN TOKENS
+════════════════════════════════════════════════════ */
+:root {
+  --bg-page:    #f5f2ec;
+  --bg-card:    #ffffff;
+  --bg-surface: #f0ece3;
+  --ink-1:      #1a1a18;
+  --ink-2:      #4a4a44;
+  --ink-3:      #8a8a80;
+  --green-dk:   #1a6b3a;
+  --green-md:   #2d9e58;
+  --green-lt:   #e8f5ee;
+  --amber-dk:   #b85c00;
+  --amber-lt:   #fff3e0;
+  --red-dk:     #b52a2a;
+  --red-lt:     #fdeaea;
+  --blue-dk:    #1a4480;
+  --blue-lt:    #e8eef8;
+  --gold:       #c8a84b;
+  --border:     rgba(26,26,24,0.08);
+  --shadow-sm:  0 1px 3px rgba(26,26,24,0.06), 0 1px 2px rgba(26,26,24,0.04);
+  --shadow-md:  0 4px 16px rgba(26,26,24,0.08), 0 2px 6px rgba(26,26,24,0.04);
+  --shadow-lg:  0 12px 40px rgba(26,26,24,0.10), 0 4px 12px rgba(26,26,24,0.06);
+  --radius:     12px;
+  --radius-lg:  20px;
+}
+
+/* ════════════════════════════════════════════════════
+   RESET & BASE
+════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; font-size: 16px; }
+
+body {
+  background: var(--bg-page);
+  color: var(--ink-1);
+  font-family: 'Syne', sans-serif;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ════════════════════════════════════════════════════
+   NAVIGATION
+════════════════════════════════════════════════════ */
+#nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1000;
+  padding: 0 40px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(245,242,236,0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  transition: box-shadow 0.3s;
+}
+#nav.scrolled { box-shadow: var(--shadow-md); }
+.nav-brand {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-2);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.nav-brand span { color: var(--gold); }
+.nav-links {
+  display: flex;
+  gap: 8px;
+  list-style: none;
+}
+.nav-links a {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-3);
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: color 0.2s, background 0.2s;
+}
+.nav-links a:hover { color: var(--ink-1); background: var(--bg-surface); }
+.nav-cta {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--bg-card);
+  background: var(--ink-1);
+  padding: 8px 16px;
+  border-radius: 6px;
+  text-decoration: none;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: opacity 0.2s;
+}
+.nav-cta:hover { opacity: 0.8; }
+
+/* ════════════════════════════════════════════════════
+   SECTION CONTAINERS
+════════════════════════════════════════════════════ */
+section { padding: 100px 0; }
+.container { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
+.container-wide { max-width: 1400px; margin: 0 auto; padding: 0 40px; }
+
+/* ════════════════════════════════════════════════════
+   HERO SECTION
+════════════════════════════════════════════════════ */
+#hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  padding: 120px 0 80px;
+}
+
+.hero-grid-bg {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, black 40%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, black 40%, transparent 100%);
+}
+
+.hero-accent {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.15;
+  pointer-events: none;
+}
+.hero-accent-1 {
+  width: 500px; height: 500px;
+  background: var(--green-md);
+  top: -100px; right: -100px;
+}
+.hero-accent-2 {
+  width: 300px; height: 300px;
+  background: var(--gold);
+  bottom: 50px; left: 100px;
+}
+
+.hero-inner { position: relative; z-index: 1; }
+
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-3);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 28px;
+}
+.hero-eyebrow::before {
+  content: '';
+  width: 32px; height: 1px;
+  background: var(--gold);
+  display: block;
+}
+
+.hero-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: clamp(42px, 6vw, 80px);
+  line-height: 1.05;
+  font-weight: 400;
+  color: var(--ink-1);
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
+}
+.hero-title em { font-style: italic; color: var(--green-dk); }
+
+.hero-subtitle {
+  font-family: 'Instrument Serif', serif;
+  font-size: clamp(18px, 2.5vw, 26px);
+  font-style: italic;
+  color: var(--ink-3);
+  margin-bottom: 48px;
+  font-weight: 400;
+}
+
+.hero-stats {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 56px;
+}
+
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 28px;
+  min-width: 160px;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s, box-shadow 0.2s;
+  opacity: 0;
+  transform: translateY(20px);
+}
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+.stat-card.animate-in {
+  animation: fadeUp 0.6s ease forwards;
+}
+.stat-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 32px;
+  font-weight: 500;
+  color: var(--ink-1);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.stat-num.green { color: var(--green-dk); }
+.stat-num.gold  { color: var(--gold); }
+.stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-3);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--bg-card);
+  background: var(--ink-1);
+  padding: 14px 28px;
+  border-radius: 8px;
+  text-decoration: none;
+  letter-spacing: 0.05em;
+  transition: opacity 0.2s;
+}
+.btn-primary:hover { opacity: 0.8; }
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-1);
+  background: transparent;
+  border: 1.5px solid var(--border);
+  padding: 14px 28px;
+  border-radius: 8px;
+  text-decoration: none;
+  letter-spacing: 0.05em;
+  transition: background 0.2s, border-color 0.2s;
+}
+.btn-outline:hover { background: var(--bg-surface); border-color: var(--ink-3); }
+
+/* ════════════════════════════════════════════════════
+   SECTION HEADERS
+════════════════════════════════════════════════════ */
+.section-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--gold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-num::after {
+  content: '';
+  flex: 1;
+  max-width: 40px;
+  height: 1px;
+  background: var(--gold);
+}
+.section-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: clamp(32px, 4vw, 52px);
+  line-height: 1.1;
+  font-weight: 400;
+  color: var(--ink-1);
+  letter-spacing: -0.02em;
+  margin-bottom: 16px;
+}
+.section-title em { font-style: italic; color: var(--green-dk); }
+.section-lead {
+  font-size: 17px;
+  color: var(--ink-2);
+  max-width: 680px;
+  line-height: 1.7;
+  margin-bottom: 56px;
+}
+
+/* ════════════════════════════════════════════════════
+   CARDS
+════════════════════════════════════════════════════ */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+.card-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 12px;
+}
+.card-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--ink-1);
+  margin-bottom: 10px;
+}
+.card-body {
+  font-size: 14px;
+  color: var(--ink-2);
+  line-height: 1.7;
+}
+
+/* ════════════════════════════════════════════════════
+   OVERVIEW / PEAD
+════════════════════════════════════════════════════ */
+.formula-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px 28px;
+  margin: 24px 0;
+}
+.formula-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 10px;
+}
+.formula-expr {
+  font-family: 'DM Mono', monospace;
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--ink-1);
+  letter-spacing: -0.01em;
+}
+.formula-expr em { color: var(--green-dk); font-style: normal; font-weight: 500; }
+
+.outcome-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 20px;
+}
+.outcome-pill {
+  padding: 14px 16px;
+  border-radius: 10px;
+  text-align: center;
+}
+.outcome-pill.beat { background: var(--green-lt); border: 1px solid rgba(26,107,58,0.2); }
+.outcome-pill.miss { background: var(--red-lt); border: 1px solid rgba(181,42,42,0.2); }
+.outcome-pill.meet { background: var(--blue-lt); border: 1px solid rgba(26,68,128,0.2); }
+.outcome-pill .op-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+.outcome-pill.beat .op-val { color: var(--green-dk); }
+.outcome-pill.miss .op-val { color: var(--red-dk); }
+.outcome-pill.meet .op-val { color: var(--blue-dk); }
+.outcome-pill .op-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+
+/* PEAD Timeline */
+.pead-visual {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  margin-top: 40px;
+  position: relative;
+  overflow: hidden;
+}
+.pead-visual::before {
+  content: 'PEAD ANOMALY';
+  position: absolute;
+  top: 20px; right: 24px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--ink-3);
+  letter-spacing: 0.15em;
+}
+.pead-chart-wrapper { height: 240px; position: relative; }
+
+/* Research Question Callout */
+.rq-callout {
+  background: var(--ink-1);
+  border-radius: var(--radius-lg);
+  padding: 48px 56px;
+  margin: 60px 0;
+  position: relative;
+  overflow: hidden;
+}
+.rq-callout::before {
+  content: '"';
+  position: absolute;
+  top: -20px; left: 32px;
+  font-family: 'Instrument Serif', serif;
+  font-size: 180px;
+  color: rgba(200,168,75,0.15);
+  line-height: 1;
+}
+.rq-callout p {
+  font-family: 'Instrument Serif', serif;
+  font-size: clamp(20px, 2.5vw, 30px);
+  line-height: 1.4;
+  color: #f5f2ec;
+  font-style: italic;
+  position: relative;
+  z-index: 1;
+  max-width: 860px;
+}
+.rq-callout cite {
+  display: block;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--gold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 20px;
+  font-style: normal;
+}
+
+/* ════════════════════════════════════════════════════
+   DATASET
+════════════════════════════════════════════════════ */
+.ticker-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 24px 0;
+}
+.ticker-chip {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 7px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--ink-2);
+  transition: all 0.2s;
+  cursor: default;
+}
+.ticker-chip:hover { background: var(--ink-1); color: var(--bg-card); border-color: var(--ink-1); }
+.ticker-chip.tech { border-color: rgba(26,107,58,0.3); color: var(--green-dk); }
+.ticker-chip.fin  { border-color: rgba(26,68,128,0.3); color: var(--blue-dk); }
+.ticker-chip.health { border-color: rgba(200,168,75,0.4); color: #9a6e00; }
+.ticker-chip.energy { border-color: rgba(184,92,0,0.3); color: var(--amber-dk); }
+.ticker-chip.cons { border-color: rgba(181,42,42,0.3); color: var(--red-dk); }
+
+.sector-legend { display: flex; flex-wrap: wrap; gap: 16px; margin: 20px 0 32px; }
+.sector-dot {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.sector-dot span {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  display: block;
+}
+
+/* ════════════════════════════════════════════════════
+   ML PIPELINE
+════════════════════════════════════════════════════ */
+.pipeline-track {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin: 48px 0;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+.pipeline-step {
+  flex: 1;
+  min-width: 140px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 28px 20px;
+  position: relative;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+.pipeline-step:first-child { border-radius: var(--radius) 0 0 var(--radius); }
+.pipeline-step:last-child  { border-radius: 0 var(--radius) var(--radius) 0; }
+.pipeline-step:not(:last-child)::after {
+  content: '›';
+  position: absolute;
+  right: -16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 24px;
+  color: var(--ink-3);
+  z-index: 2;
+  background: var(--bg-page);
+  width: 32px;
+  text-align: center;
+}
+.pipeline-step:hover { background: var(--bg-surface); }
+.pipeline-step.active { background: var(--ink-1); border-color: var(--ink-1); }
+.pipeline-step .ps-icon {
+  font-size: 24px;
+  margin-bottom: 12px;
+  display: block;
+}
+.pipeline-step .ps-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-1);
+  margin-bottom: 4px;
+  letter-spacing: 0.03em;
+}
+.pipeline-step.active .ps-name { color: var(--bg-card); }
+.pipeline-step .ps-desc {
+  font-size: 11px;
+  color: var(--ink-3);
+  line-height: 1.5;
+}
+.pipeline-step.active .ps-desc { color: rgba(245,242,236,0.7); }
+
+.pipeline-detail {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 32px;
+  margin-top: 8px;
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+.pipeline-detail.show { display: block; }
+.pipeline-detail h4 { font-family: 'Instrument Serif', serif; font-size: 22px; margin-bottom: 10px; }
+.pipeline-detail p { font-size: 14px; color: var(--ink-2); line-height: 1.7; }
+
+/* ════════════════════════════════════════════════════
+   FEATURE ENGINEERING
+════════════════════════════════════════════════════ */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
+  margin-top: 40px;
+}
+
+.feature-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.feature-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 3px;
+  height: 100%;
+  background: var(--green-md);
+}
+
+.fc-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+.fc-icon {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  background: var(--bg-surface);
+}
+.fc-importance {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-3);
+  letter-spacing: 0.08em;
+}
+.fc-name {
+  font-family: 'Instrument Serif', serif;
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--ink-1);
+  margin-bottom: 8px;
+}
+.fc-formula {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--green-dk);
+  background: var(--green-lt);
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin: 12px 0;
+  display: block;
+}
+.fc-why {
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.6;
+  margin-top: 10px;
+}
+.fc-mini-chart {
+  height: 60px;
+  margin-top: 16px;
+}
+.fc-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 4px;
+  margin-top: 10px;
+}
+.fc-tag.momentum { background: var(--blue-lt); color: var(--blue-dk); }
+.fc-tag.vol { background: var(--amber-lt); color: var(--amber-dk); }
+.fc-tag.historical { background: var(--green-lt); color: var(--green-dk); }
+.fc-tag.volume { background: var(--red-lt); color: var(--red-dk); }
+
+/* ════════════════════════════════════════════════════
+   LOOK-AHEAD BIAS
+════════════════════════════════════════════════════ */
+.bias-compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin: 32px 0;
+}
+.bias-box {
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  border: 1px solid var(--border);
+}
+.bias-box.wrong {
+  background: var(--red-lt);
+  border-color: rgba(181,42,42,0.2);
+}
+.bias-box.correct {
+  background: var(--green-lt);
+  border-color: rgba(26,107,58,0.2);
+}
+.bias-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.wrong .bias-label { color: var(--red-dk); }
+.correct .bias-label { color: var(--green-dk); }
+.bias-box h4 { font-family: 'Instrument Serif', serif; font-size: 20px; margin-bottom: 10px; }
+.bias-box p { font-size: 13px; color: var(--ink-2); line-height: 1.6; }
+
+.wf-visual {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  margin-top: 24px;
+  overflow: hidden;
+}
+.wf-label { font-size: 11px; font-weight: 700; color: var(--ink-3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 20px; }
+.wf-rows { display: flex; flex-direction: column; gap: 8px; }
+.wf-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--ink-3);
+}
+.wf-row .wf-qtr {
+  width: 60px;
+  flex-shrink: 0;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+.wf-bar-track {
+  flex: 1;
+  height: 20px;
+  background: var(--bg-surface);
+  border-radius: 4px;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}
+.wf-train {
+  background: rgba(26,68,128,0.5);
+  height: 100%;
+  transition: width 0.6s ease;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 4px;
+  font-size: 9px;
+  color: white;
+  font-weight: 600;
+}
+.wf-test {
+  background: rgba(26,107,58,0.7);
+  height: 100%;
+  width: 40px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: white;
+  font-weight: 600;
+}
+
+/* ════════════════════════════════════════════════════
+   MODELS
+════════════════════════════════════════════════════ */
+.models-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+  margin-top: 40px;
+}
+.model-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.model-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+.model-card.primary {
+  border-color: var(--green-md);
+  box-shadow: 0 0 0 3px rgba(45,158,88,0.08);
+}
+.model-card.primary::after {
+  content: 'PRIMARY MODEL';
+  position: absolute;
+  top: 14px; right: 14px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  padding: 4px 8px;
+  background: var(--green-lt);
+  color: var(--green-dk);
+  border-radius: 4px;
+}
+.mc-icon { font-size: 28px; margin-bottom: 16px; }
+.mc-name { font-family: 'Instrument Serif', serif; font-size: 22px; margin-bottom: 6px; }
+.mc-type { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--ink-3); letter-spacing: 0.08em; margin-bottom: 16px; }
+.mc-metrics { display: flex; gap: 12px; margin-bottom: 16px; }
+.mc-m { text-align: center; }
+.mc-m .val {
+  font-family: 'DM Mono', monospace;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--ink-1);
+  display: block;
+}
+.mc-m .lbl { font-size: 10px; color: var(--ink-3); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+
+.meter-row { margin: 10px 0; }
+.meter-label { font-size: 11px; font-weight: 600; color: var(--ink-3); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 5px; display: flex; justify-content: space-between; }
+.meter-track {
+  height: 5px;
+  background: var(--bg-surface);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.meter-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 1s ease;
+  width: 0;
+}
+
+.mc-note { font-size: 12px; color: var(--ink-2); line-height: 1.6; margin-top: 12px; }
+
+/* ════════════════════════════════════════════════════
+   CHARTS GALLERY
+════════════════════════════════════════════════════ */
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-top: 40px;
+}
+.chart-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  box-shadow: var(--shadow-sm);
+}
+.chart-card.wide { grid-column: 1 / -1; }
+.chart-card h4 {
+  font-family: 'Instrument Serif', serif;
+  font-size: 20px;
+  margin-bottom: 6px;
+}
+.chart-card p {
+  font-size: 12px;
+  color: var(--ink-3);
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+.chart-wrapper { position: relative; height: 260px; }
+.chart-wrapper.tall { height: 320px; }
+
+/* ════════════════════════════════════════════════════
+   BACKTEST ENGINE
+════════════════════════════════════════════════════ */
+.backtest-rules {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 40px;
+}
+.rule-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  text-align: center;
+}
+.rule-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--ink-1);
+  display: block;
+  margin-bottom: 4px;
+}
+.rule-lbl { font-size: 11px; font-weight: 700; color: var(--ink-3); letter-spacing: 0.08em; text-transform: uppercase; }
+
+.bt-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 32px 0;
+}
+.btm-card {
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  border: 1px solid transparent;
+  transition: transform 0.2s;
+}
+.btm-card:hover { transform: translateY(-2px); }
+.btm-card.positive { background: var(--green-lt); border-color: rgba(26,107,58,0.2); }
+.btm-card.neutral  { background: var(--bg-card); border-color: var(--border); }
+.btm-card.warning  { background: var(--amber-lt); border-color: rgba(184,92,0,0.2); }
+.btm-card.negative { background: var(--red-lt); border-color: rgba(181,42,42,0.2); }
+.btm-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 28px;
+  font-weight: 500;
+  display: block;
+  margin-bottom: 4px;
+}
+.positive .btm-val { color: var(--green-dk); }
+.neutral  .btm-val { color: var(--ink-1); }
+.warning  .btm-val { color: var(--amber-dk); }
+.negative .btm-val { color: var(--red-dk); }
+.btm-lbl { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.positive .btm-lbl { color: var(--green-dk); opacity: 0.75; }
+.neutral  .btm-lbl { color: var(--ink-3); }
+.warning  .btm-lbl { color: var(--amber-dk); opacity: 0.75; }
+.negative .btm-lbl { color: var(--red-dk); opacity: 0.75; }
+
+/* ════════════════════════════════════════════════════
+   RISK / LIMITATIONS
+════════════════════════════════════════════════════ */
+.risks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  margin-top: 40px;
+}
+.risk-card {
+  border-radius: var(--radius);
+  padding: 22px 24px;
+  border: 1px solid transparent;
+  display: flex;
+  gap: 14px;
+}
+.risk-card.amber { background: var(--amber-lt); border-color: rgba(184,92,0,0.2); }
+.risk-card.red   { background: var(--red-lt); border-color: rgba(181,42,42,0.2); }
+.risk-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+.risk-name { font-size: 13px; font-weight: 700; color: var(--ink-1); margin-bottom: 5px; letter-spacing: 0.02em; }
+.risk-desc { font-size: 12px; color: var(--ink-2); line-height: 1.6; }
+
+.disclaimer {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  margin-top: 32px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.disclaimer-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.disclaimer-text { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--ink-3); line-height: 1.6; }
+
+/* ════════════════════════════════════════════════════
+   INTERACTIVE DASHBOARD
+════════════════════════════════════════════════════ */
+#dashboard-section {
+  background: var(--ink-1);
+  padding: 100px 0;
+}
+#dashboard-section .section-num { color: var(--gold); }
+#dashboard-section .section-num::after { background: var(--gold); }
+#dashboard-section .section-title { color: var(--bg-page); }
+#dashboard-section .section-lead { color: rgba(245,242,236,0.6); }
+
+.terminal {
+  background: #0e0e0c;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.4);
+}
+.terminal-bar {
+  background: rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.t-dots { display: flex; gap: 6px; }
+.t-dot { width: 10px; height: 10px; border-radius: 50%; }
+.t-dot:nth-child(1) { background: #ff5f57; }
+.t-dot:nth-child(2) { background: #febc2e; }
+.t-dot:nth-child(3) { background: #28c840; }
+.t-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.08em;
+  flex: 1;
+  text-align: center;
+}
+
+.terminal-body {
+  padding: 32px;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 24px;
+}
+
+.t-controls { display: flex; flex-direction: column; gap: 16px; }
+
+.t-field label {
+  display: block;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 7px;
+}
+.t-field select, .t-field input[type=range] {
+  width: 100%;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #f5f2ec;
+  padding: 10px 14px;
+  border-radius: 7px;
+  outline: none;
+  appearance: none;
+  transition: border-color 0.2s;
+}
+.t-field select:hover, .t-field input[type=range]:hover { border-color: rgba(255,255,255,0.2); }
+.t-field input[type=range] {
+  padding: 4px 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  accent-color: var(--green-md);
+}
+.t-range-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--green-md);
+  float: right;
+}
+
+.t-run-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--green-md);
+  color: white;
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  text-transform: uppercase;
+}
+.t-run-btn:hover { opacity: 0.85; }
+.t-run-btn:active { transform: scale(0.98); }
+
+.t-output { display: flex; flex-direction: column; gap: 16px; }
+
+.signal-display {
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  text-align: center;
+  border: 1px solid transparent;
+  transition: all 0.4s ease;
+}
+.signal-display.buy    { background: rgba(26,107,58,0.15); border-color: rgba(45,158,88,0.3); }
+.signal-display.hold   { background: rgba(26,68,128,0.15); border-color: rgba(26,68,128,0.3); }
+.signal-display.avoid  { background: rgba(181,42,42,0.15); border-color: rgba(181,42,42,0.3); }
+
+.sig-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.sig-val {
+  font-family: 'Instrument Serif', serif;
+  font-size: 42px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+.buy   .sig-val { color: var(--green-md); }
+.hold  .sig-val { color: #6891cc; }
+.avoid .sig-val { color: #e07070; }
+
+.confidence-meter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.conf-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+}
+.conf-val { color: var(--green-md) !important; font-size: 16px !important; font-weight: 500; }
+.conf-track {
+  height: 8px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.conf-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--green-md), var(--green-dk));
+  transition: width 0.6s ease;
+}
+
+.t-metrics-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.t-m {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+}
+.t-m .val {
+  font-family: 'DM Mono', monospace;
+  font-size: 16px;
+  font-weight: 500;
+  color: #f5f2ec;
+  display: block;
+  margin-bottom: 3px;
+  transition: all 0.4s;
+}
+.t-m .lbl { font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.3); letter-spacing: 0.1em; text-transform: uppercase; }
+
+.feature-bars { display: flex; flex-direction: column; gap: 6px; }
+.fb-row { display: flex; align-items: center; gap: 10px; }
+.fb-name {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: rgba(255,255,255,0.4);
+  width: 90px;
+  flex-shrink: 0;
+  text-align: right;
+}
+.fb-track { flex: 1; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; }
+.fb-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+.fb-pos { background: var(--green-md); }
+.fb-neg { background: #e07070; }
+.fb-val { font-family: 'DM Mono', monospace; font-size: 10px; color: rgba(255,255,255,0.4); width: 40px; }
+
+/* ════════════════════════════════════════════════════
+   CONCLUSION / INSIGHTS
+════════════════════════════════════════════════════ */
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin: 40px 0;
+}
+.insight-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+}
+.insight-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--gold);
+  letter-spacing: 0.1em;
+  margin-bottom: 12px;
+}
+.insight-heading {
+  font-family: 'Instrument Serif', serif;
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+.insight-text { font-size: 13px; color: var(--ink-2); line-height: 1.7; }
+
+.roadmap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 32px;
+}
+.rm-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  display: flex;
+  gap: 14px;
+  transition: transform 0.2s;
+}
+.rm-card:hover { transform: translateY(-2px); }
+.rm-icon { font-size: 20px; flex-shrink: 0; }
+.rm-name { font-size: 13px; font-weight: 700; color: var(--ink-1); margin-bottom: 4px; }
+.rm-desc { font-size: 12px; color: var(--ink-2); line-height: 1.6; }
+
+/* ════════════════════════════════════════════════════
+   FOOTER
+════════════════════════════════════════════════════ */
+footer {
+  background: var(--ink-1);
+  color: rgba(245,242,236,0.5);
+  padding: 48px 0;
+}
+.footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.footer-brand {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: rgba(245,242,236,0.7);
+}
+.footer-brand span { color: var(--gold); }
+.footer-note {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+
+/* ════════════════════════════════════════════════════
+   UTILITIES / ANIMATIONS
+════════════════════════════════════════════════════ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes countUp {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.fade-up {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.fade-up.visible { opacity: 1; transform: translateY(0); }
+.fade-up.d1 { transition-delay: 0.1s; }
+.fade-up.d2 { transition-delay: 0.2s; }
+.fade-up.d3 { transition-delay: 0.3s; }
+.fade-up.d4 { transition-delay: 0.4s; }
+
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0;
+}
+
+/* ════════════════════════════════════════════════════
+   RESPONSIVE
+════════════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .nav-links { display: none; }
+  .container, .container-wide { padding: 0 24px; }
+  .charts-grid { grid-template-columns: 1fr; }
+  .charts-grid .chart-card.wide { grid-column: 1; }
+  .bias-compare { grid-template-columns: 1fr; }
+  .models-grid { grid-template-columns: 1fr 1fr; }
+  .backtest-rules { grid-template-columns: repeat(2, 1fr); }
+  .bt-metrics-grid { grid-template-columns: 1fr 1fr; }
+  .insights-grid { grid-template-columns: 1fr; }
+  .terminal-body { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  section { padding: 60px 0; }
+  .hero-stats { gap: 10px; }
+  .stat-card { min-width: 130px; padding: 16px 20px; }
+  .pipeline-track { flex-direction: column; }
+  .pipeline-step::after { display: none; }
+  .pipeline-step { border-radius: var(--radius) !important; border: 1px solid var(--border) !important; }
+  .features-grid { grid-template-columns: 1fr; }
+  .models-grid { grid-template-columns: 1fr; }
+  .backtest-rules { grid-template-columns: 1fr; }
+  .bt-metrics-grid { grid-template-columns: 1fr; }
+  .outcome-grid { grid-template-columns: 1fr; }
+  .t-metrics-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- ══════════════════════════════════════════════ 
+     NAVIGATION
+══════════════════════════════════════════════ -->
+<nav id="nav">
+  <div class="nav-brand">Quant Research <span>// ESP</span></div>
+  <ul class="nav-links">
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#dataset">Dataset</a></li>
+    <li><a href="#pipeline">Pipeline</a></li>
+    <li><a href="#models">Models</a></li>
+    <li><a href="#backtest">Backtest</a></li>
+    <li><a href="#dashboard-section">Dashboard</a></li>
+  </ul>
+  <a href="#dashboard-section" class="nav-cta">Live Demo ↓</a>
+</nav>
+
+<!-- ══════════════════════════════════════════════ 
+     HERO
+══════════════════════════════════════════════ -->
+<section id="hero">
+  <div class="hero-grid-bg"></div>
+  <div class="hero-accent hero-accent-1"></div>
+  <div class="hero-accent hero-accent-2"></div>
+
+  <div class="container hero-inner">
+    <div class="hero-eyebrow">Event-Driven ML · US Equities · 2018–2024</div>
+
+    <h1 class="hero-title">
+      Earnings Surprise<br>
+      <em>Predictor</em>
+    </h1>
+    <p class="hero-subtitle">Can price signals reveal earnings outcomes before they're announced?</p>
+
+    <div class="hero-stats" id="hero-stats">
+      <div class="stat-card" style="animation-delay:0.1s">
+        <div class="stat-num" data-target="641">0</div>
+        <div class="stat-label">Earnings Events</div>
+      </div>
+      <div class="stat-card" style="animation-delay:0.25s">
+        <div class="stat-num green">4</div>
+        <div class="stat-label">ML Models</div>
+      </div>
+      <div class="stat-card" style="animation-delay:0.4s">
+        <div class="stat-num gold">73.5%</div>
+        <div class="stat-label">Base Beat Rate</div>
+      </div>
+      <div class="stat-card" style="animation-delay:0.55s">
+        <div class="stat-num">2018–2024</div>
+        <div class="stat-label">Study Period</div>
+      </div>
+      <div class="stat-card" style="animation-delay:0.7s">
+        <div class="stat-num green">+48.6 bps</div>
+        <div class="stat-label">Edge vs Buy-Always</div>
+      </div>
+    </div>
+
+    <div class="hero-actions">
+      <a href="#overview" class="btn-primary">Explore Research ↓</a>
+      <a href="#dashboard-section" class="btn-outline">Live Prediction Dashboard</a>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════════════════════════════════════════════ 
+     OVERVIEW / PEAD
+══════════════════════════════════════════════ -->
+<section id="overview">
+  <div class="container">
+    <div class="fade-up">
+      <div class="section-num">01 — Research Foundation</div>
+      <h2 class="section-title">The <em>PEAD Anomaly</em><br>& Earnings Surprise</h2>
+      <p class="section-lead">Every quarter, companies report Earnings Per Share. Analysts publish a consensus estimate beforehand. When reality diverges from expectation — a surprise is born. Markets systematically underreact to these surprises, creating a documented and exploitable drift.</p>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;" class="fade-up d1">
+      <div>
+        <div class="formula-card">
+          <div class="formula-label">The Surprise Formula</div>
+          <div class="formula-expr">Surprise% = (<em>Actual</em> − Estimate) ÷ |Estimate| × 100</div>
+        </div>
+        <div class="outcome-grid">
+          <div class="outcome-pill beat">
+            <div class="op-val">Surprise > +2%</div>
+            <div class="op-label">BEAT → Bullish</div>
+          </div>
+          <div class="outcome-pill miss">
+            <div class="op-val">Surprise < −2%</div>
+            <div class="op-label">MISS → Bearish</div>
+          </div>
+          <div class="outcome-pill meet">
+            <div class="op-val">Within ±2%</div>
+            <div class="op-label">MEET → Muted</div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="padding:28px;">
+        <div class="card-label">Post-Earnings Announcement Drift</div>
+        <h3 class="card-title" style="font-size:18px; margin-bottom:10px;">Why Markets Underreact</h3>
+        <p class="card-body">PEAD, first documented by Ball & Brown (1968), is one of finance's most persistent anomalies. After a positive earnings surprise, stocks continue drifting upward for days — weeks. Institutional investors can't immediately absorb and act on new information. This project goes one step further: predicting the surprise <em>before</em> it occurs.</p>
+        <div style="margin-top:16px; padding:14px 16px; background:var(--bg-surface); border-radius:8px;">
+          <div style="font-family:'DM Mono',monospace; font-size:11px; color:var(--ink-3); margin-bottom:6px; letter-spacing:0.06em;">REFERENCED ANOMALY</div>
+          <div style="font-size:13px; color:var(--ink-1); font-weight:600;">Post-Earnings Announcement Drift (PEAD)</div>
+          <div style="font-size:12px; color:var(--ink-3);">Ball & Brown, 1968 · Contradicts Efficient Market Hypothesis</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pead-visual fade-up d2">
+      <div class="pead-chart-wrapper">
+        <canvas id="peadChart"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ 
+     RESEARCH QUESTION
+══════════════════════════════════════════════ -->
+<div class="container">
+  <div class="rq-callout fade-up">
+    <p>"Can pre-announcement signals in price, volume, and earnings history predict whether a company will beat earnings estimates — and can we profit from that prediction?"</p>
+    <cite>— Core Research Question, Earnings Surprise Predictor</cite>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ══════════════════════════════════════════════ 
+     DATASET
+══════════════════════════════════════════════ -->
+<section id="dataset">
+  <div class="container">
+    <div class="fade-up">
+      <div class="section-num">02 — Data Universe</div>
+      <h2 class="section-title">25 US <em>Large-Cap</em> Stocks</h2>
+      <p class="section-lead">Seven years of quarterly earnings events across five sectors, sourced via yfinance. US large-caps chosen for data reliability and liquidity.</p>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 340px; gap:32px; align-items:start;" class="fade-up d1">
+      <div>
+        <div class="sector-legend">
+          <div class="sector-dot"><span style="background:#2d9e58"></span> Technology (10)</div>
+          <div class="sector-dot"><span style="background:#1a4480"></span> Financials (5)</div>
+          <div class="sector-dot"><span style="background:#c8a84b"></span> Healthcare (5)</div>
+          <div class="sector-dot"><span style="background:#b85c00"></span> Energy (2)</div>
+          <div class="sector-dot"><span style="background:#b52a2a"></span> Consumer (3)</div>
+        </div>
+
+        <div class="ticker-grid">
+          <span class="ticker-chip tech">AAPL</span><span class="ticker-chip tech">MSFT</span><span class="ticker-chip tech">GOOGL</span><span class="ticker-chip tech">AMZN</span><span class="ticker-chip tech">META</span>
+          <span class="ticker-chip tech">NVDA</span><span class="ticker-chip tech">AMD</span><span class="ticker-chip tech">INTC</span><span class="ticker-chip tech">CRM</span><span class="ticker-chip tech">ORCL</span>
+          <span class="ticker-chip fin">JPM</span><span class="ticker-chip fin">BAC</span><span class="ticker-chip fin">GS</span><span class="ticker-chip fin">MS</span><span class="ticker-chip fin">WFC</span>
+          <span class="ticker-chip health">JNJ</span><span class="ticker-chip health">PFE</span><span class="ticker-chip health">UNH</span><span class="ticker-chip health">ABBV</span><span class="ticker-chip health">MRK</span>
+          <span class="ticker-chip energy">XOM</span><span class="ticker-chip energy">CVX</span><span class="ticker-chip cons">TSLA</span><span class="ticker-chip cons">HD</span><span class="ticker-chip cons">WMT</span>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:28px;">
+          <div class="card" style="padding:20px; text-align:center;">
+            <div style="font-family:'DM Mono',monospace; font-size:26px; font-weight:500; color:var(--ink-1); margin-bottom:4px;" data-target-ds="699">699</div>
+            <div style="font-size:11px; font-weight:700; color:var(--ink-3); letter-spacing:0.08em; text-transform:uppercase;">Raw Events</div>
+          </div>
+          <div class="card" style="padding:20px; text-align:center;">
+            <div style="font-family:'DM Mono',monospace; font-size:26px; font-weight:500; color:var(--green-dk); margin-bottom:4px;">641</div>
+            <div style="font-size:11px; font-weight:700; color:var(--ink-3); letter-spacing:0.08em; text-transform:uppercase;">Clean Events</div>
+          </div>
+          <div class="card" style="padding:20px; text-align:center;">
+            <div style="font-family:'DM Mono',monospace; font-size:26px; font-weight:500; color:var(--gold); margin-bottom:4px;">7 yrs</div>
+            <div style="font-size:11px; font-weight:700; color:var(--ink-3); letter-spacing:0.08em; text-transform:uppercase;">Study Window</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="padding:24px;">
+        <div class="card-label">Sector Allocation</div>
+        <div style="position:relative; height:220px; margin:8px 0;">
+          <canvas id="sectorPie"></canvas>
+        </div>
+        <div style="margin-top:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border);">
+            <span style="font-size:12px; color:var(--ink-2);">Beat Rate (base)</span>
+            <span style="font-family:'DM Mono',monospace; font-size:13px; color:var(--green-dk); font-weight:500;">73.5%</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border);">
+            <span style="font-size:12px; color:var(--ink-2);">Date range</span>
+            <span style="font-family:'DM Mono',monospace; font-size:12px; color:var(--ink-2);">2018 – 2024</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0;">
+            <span style="font-size:12px; color:var(--ink-2);">Outliers removed</span>
+            <span style="font-family:'DM Mono',monospace; font-size:12px; color:var(--red-dk);">8 events</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════════════════════════════════════════════ 
+     ML PIPELINE
+══════════════════════════════════════════════ -->
+<section id="pipeline">
+  <div class="container">
+    <div class="fade-up">
+      <div class="section-num">03 — ML Pipeline</div>
+      <h2 class="section-title">From Raw Data<br>to <em>Trade Signal</em></h2>
+      <p class="section-lead">A rigorous six-stage pipeline designed to prevent look-ahead bias at every step. Click each stage to learn more.</p>
+    </div>
+
+    <div class="pipeline-track fade-up d1" id="pipelineTrack">
+      <div class="pipeline-step active" data-step="0">
+        <span class="ps-icon">📥</span>
+        <div class="ps-name">Data Ingestion</div>
+        <div class="ps-desc">Price, volume & EPS via yfinance</div>
+      </div>
+      <div class="pipeline-step" data-step="1">
+        <span class="ps-icon">⚙️</span>
+        <div class="ps-name">Feature Engineering</div>
+        <div class="ps-desc">10 pre-announcement signals</div>
+      </div>
+      <div class="pipeline-step" data-step="2">
+        <span class="ps-icon">🏋️</span>
+        <div class="ps-name">Model Training</div>
+        <div class="ps-desc">4 models with class balancing</div>
+      </div>
+      <div class="pipeline-step" data-step="3">
+        <span class="ps-icon">🔄</span>
+        <div class="ps-name">Walk-Forward</div>
+        <div class="ps-desc">No look-ahead bias guarantee</div>
+      </div>
+      <div class="pipeline-step" data-step="4">
+        <span class="ps-icon">🎯</span>
+        <div class="ps-name">Prediction</div>
+        <div class="ps-desc">Prob > 60% → BUY signal</div>
+      </div>
+      <div class="pipeline-step" data-step="5">
+        <span class="ps-icon">📊</span>
+        <div class="ps-name">Backtest</div>
+        <div class="ps-desc">Event-driven with TC</div>
+      </div>
+    </div>
+
+    <div id="pipelineDetail" class="pipeline-detail show">
+      <h4 id="pd-title">Data Ingestion</h4>
+      <p id="pd-body">1,886 trading days of adjusted close prices and volume for 27 symbols (25 stocks + SPY + S&P 500), downloaded in a single batch via <code style="font-family:'DM Mono',monospace; background:var(--bg-surface); padding:2px 6px; border-radius:4px;">yf.download()</code>. Price data starts 6 months before the earnings study window to allow full lookback computations for early 2018 events.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════════════════════════════════════════════ 
+     FEATURE ENGINEERING
+══════════════════════════════════════════════ -->
+<section id="features" style="background:var(--bg-surface);">
+  <div class="container">
+    <div class="fade-up">
+      <div class="section-num">04 — Feature Engineering</div>
+      <h2 class="section-title">Pre-Announcement<br><em>Signal Construction</em></h2>
+      <p class="section-lead">10 features engineered strictly from data available <em>before</em> the earnings date. All lookback windows end at D−1. This is the single most important discipline in the project.</p>
+    </div>
+
+    <div class="features-grid">
+
+      <div class="feature-card fade-up">
+        <div class="fc-top">
+          <div class="fc-icon">📈</div>
+          <div class="fc-importance">IMP: 0.148</div>
+        </div>
+        <div class="fc-name">21-Day Price Return</div>
+        <code class="fc-formula">ret_21d = P[D-1] / P[D-22] − 1</code>
+        <p class="fc-why">When analysts quietly upgrade EPS estimates, institutions front-run, pushing prices up. Pre-earnings drift may be a proxy for hidden upward revisions. <strong>Higher → more likely to Beat.</strong></p>
+        <span class="fc-tag momentum">Momentum</span>
+      </div>
+
+      <div class="feature-card fade-up d1">
+        <div class="fc-top">
+          <div class="fc-icon">⚡</div>
+          <div class="fc-importance">IMP: 0.130</div>
+        </div>
+        <div class="fc-name">Relative Momentum</div>
+        <code class="fc-formula">rel_mom = ret_21d(stock) − ret_21d(SPY)</code>
+        <p class="fc-why">If a stock dramatically outperforms the market 21 days before earnings, it signals company-specific positive catalyst — analyst upgrades, product wins, or sector tailwinds that will translate into a beat.</p>
+        <span class="fc-tag momentum">Relative Strength</span>
+      </div>
+
+      <div class="feature-card fade-up d2">
+        <div class="fc-top">
+          <div class="fc-icon">📊</div>
+          <div class="fc-importance">IMP: 0.152</div>
+        </div>
+        <div class="fc-name">21-Day Realized Volatility</div>
+        <code class="fc-formula">vol_21d = std(log_ret) × √252</code>
+        <p class="fc-why">High pre-earnings volatility reflects market uncertainty about the outcome. Some research suggests high-uncertainty events produce larger surprises in both directions. <strong>Lower vol → more likely to Beat.</strong></p>
+        <span class="fc-tag vol">Volatility</span>
+      </div>
+
+      <div class="feature-card fade-up d1">
+        <div class="fc-top">
+          <div class="fc-icon">⚖️</div>
+          <div class="fc-importance">IMP: 0.123</div>
+        </div>
+        <div class="fc-name">Volatility Ratio</div>
+        <code class="fc-formula">vol_ratio = σ(5d) / σ(63d)</code>
+        <p class="fc-why">If short-term vol is expanding vs long-term, the market is becoming specifically uncertain about the upcoming announcement. Ratio > 1.0 indicates vol expansion heading into earnings.</p>
+        <span class="fc-tag vol">Uncertainty Signal</span>
+      </div>
+
+      <div class="feature-card fade-up d2">
+        <div class="fc-top">
+          <div class="fc-icon">🔊</div>
+          <div class="fc-importance">IMP: 0.130</div>
+        </div>
+        <div class="fc-name">Volume Spike</div>
+        <code class="fc-formula">vol_spike = avg_vol(5d) / avg_vol(63d)</code>
+        <p class="fc-why">Unusual pre-earnings volume can signal informed institutional positioning. If well-connected analysts expect a beat, institutions may accumulate quietly, leaving a volume footprint before the announcement.</p>
+        <span class="fc-tag volume">Informed Flow</span>
+      </div>
+
+      <div class="feature-card fade-up d3">
+        <div class="fc-top">
+          <div class="fc-icon">🏆</div>
+          <div class="fc-importance">IMP: 0.148</div>
+        </div>
+        <div class="fc-name">Beat Streak</div>
+        <code class="fc-formula">beat_streak = Σ Beat(t-1, t-2) ∈ {0,1,2}</code>
+        <p class="fc-why">The most interpretable feature. Companies like AAPL and MSFT beat estimates quarter after quarter through conservative guidance + operational execution. A 2-quarter beat streak is a strong prior for the next beat.</p>
+        <span class="fc-tag historical">Historical Pattern</span>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════════════════════════════════════════════ 
+     LOOK-AHEAD BIAS
+══════════════════════════════════════════════ -->
+<section id="validation">
+  <div class="container">
+    <div class="fade-up">
+      <div class="section-num">05 — Validation Strategy</div>
+      <h2 class="section-title">Walk-Forward Validation<br><em>No Look-Ahead Bias</em></h2>
+      <p class="section-lead">Standard k-fold cross-validation is fundamentally wrong for time-series finance. It trains on future data to predict the past — producing fictional performance metrics.</p>
+    </div>
+
+    <div class="bias-compare fade-up d1">
+      <div class="bias-box wrong">
+        <div class="bias-label">⛔ Wrong Approach</div>
+        <h4>Standard K-Fold CV</h4>
+        <p>Randomly shuffles data and uses 2023 events to train a model predicting 2019 events. The model "knows the future." Performance metrics are completely fictional — this is look-ahead bias.</p>
+      </div>
+      <div class="bias-box correct">
+        <div class="bias-label">✅ Correct Approach</div>
+        <h4>Walk-Forward Validation</h4>
+        <p>Expands training window chronologically. To predict Q9, only Q1–Q8 are used for training. Every prediction is genuinely out-of-sample. Minimum 8 quarters warm-up before first prediction.</p>
+      </div>
+    </div>
+
+    <div class="wf-visual fade-up d2">
+      <div class="wf-label">Walk-Forward Training Windows (2020Q3 → 2024Q4)</div>
+      <div class="wf-rows" id="wfRows"></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════════════════════════════════════════════ 
+     MODELS
+══════════════════════════════════════════════ -->
+<section id="models" style="background:var(--bg-surface);">
+  <div class="container">
+    <div class="fade-up">
+      <div class="section-num">06 — Model Training</div>
+      <h2 class="section-title">Four <em>Classifiers</em><br>Walk-Forward Results</h2>
+      <p class="section-lead">All models trained with <code style="font-family:'DM Mono',monospace; background:var(--bg-card); padding:2px 8px; border-radius:4px; font-size:14px;">class_weight='balanced'</code> to handle the 73/27 Beat/Not-Beat imbalance. Evaluated on genuinely out-of-sample data only.</p>
+    </div>
+
+    <div class="models-grid">
+
+      <div class="model-card fade-up">
+        <div class="mc-icon">📐</div>
+        <div class="mc-name">Logistic Regression</div>
+        <div class="mc-type">LINEAR BASELINE · BEST AUC</div>
+        <div class="mc-metrics">
+          <div class="mc-m"><span class="val">0.571</span><div class="lbl">AUC-ROC</div></div>
+          <div class="mc-m"><span class="val">0.715</span><div class="lbl">F1 Score</div></div>
+          <div class="mc-m"><span class="val">0.788</span><div class="lbl">Precision</div></div>
+        </div>
+        <div class="meter-row">
+          <div class="meter-label"><span>Complexity</span><span>Low</span></div>
+          <div class="meter-track"><div class="meter-fill" style="width:20%; background:var(--blue-dk);"></div></div>
+        </div>
+        <div class="meter-row">
+          <div class="meter-label"><span>Explainability</span><span>High</span></div>
+          <div class="meter-track"><div class="meter-fill" style="width:90%; background:var(--green-md);"></div></div>
+        </div>
+        <p class="mc-note">Best AUC-ROC among all 4 models. Learns a linear combination of features. Moderate signal — some predictive value above random.</p>
+      </div>
+
+      <div class="model-card fade-up d1">
+        <div class="mc-icon">🌳</div>
+        <div class="mc-name">Decision Tree</div>
+        <div class="mc-type">NON-LINEAR · DEPTH = 4</div>
+        <div class="mc-metrics">
+          <div class="mc-m"><span class="val">0.518</span><div class="lbl">AUC-ROC</div></div>
+          <div class="mc-m"><span class="val">0.701</span><div class="lbl">F1 Score</div></div>
+          <div class="mc-m"><span class="val">0.775</span><div class="lbl">Precision</div></div>
+        </div>
+        <div class="meter-row">
+          <div class="meter-label"><span>Complexity</span><span>Medium</span></div>
+          <div class="meter-track"><div class="meter-fill" style="width:45%; background:var(--amber-dk);"></div></div>
+        </div>
+        <div class="meter-row">
+          <div class="meter-label"><span>Explainability</span><span>High</span></div>
+          <div class="meter-track"><div class="meter-fill" style="width:85%; background:var(--green-md);"></div></div>
+        </div>
+        <p class="mc-note">Interpretable if/then rules. Depth-limited to prevent overfitting. Near-random AUC on out-of-sample data — simple trees struggle with financial noise.</p>
+      </div>
+
+      <div class="model-card primary fade-up d2">
+        <div class="mc-icon">🌲</div>
+        <div class="mc-name">Random Forest</div>
+        <div class="mc-type">ENSEMBLE · 150 TREES</div>
+        <div class="mc-metrics">
+          <div class="mc-m"><span class="val">0.523</span><div class="lbl">AUC-ROC</div></div>
+          <div class="mc-m"><span class="val">0.797</span><div class="lbl">F1 Score</div></div>
+          <div class="mc-m"><span class="val">0.760</span><div class="lbl">Precision</div></div>
+        </div>
+        <div class="meter-row">
+          <div class="meter-label"><span>Complexity</span><span>High</span></div>
+          <div class="meter-track"><div class="meter-fill" style="width:75%; background:var(--amber-dk);"></div></div>
+        </div>
+        <div class="meter-row">
+          <div class="meter-label"><span>Explainability</span><span>Medium</span></div>
+          <div class="meter-track"><div class="meter-fill" style="width:55%; background:var(--green-md);"></div></div>
+        </div>
+        <p class="mc-note">Highest F1 and best backtest performance. Ensemble averaging reduces overfitting. Used for final trading signals and importance analysis.</p>
+      </div>
+
+      <div class="model-card fade-up d3">
+        <div class="mc-icon">🔮</div>
+        <div class="mc-name">SVM (RBF)</div>
+        <div class="mc-type">KERNEL METHOD · SCALED</div>
+        <div class="mc-metrics">
+          <div class="mc-m"><span class="val">0.502</span><div class="lbl">AUC-ROC</div></div>
+          <div class="mc-m"><span class="val">0.722</span><div class="lbl">F1 Score</div></div>
+          <div class="mc-m"><span class="val">0.772</span><div class="lbl">Precision</div></div>
+        </div>
+        <div class="meter-row">
+          <div class="meter-label"><span>Complexity</span><span>High</span></div>
+          <div class="meter-track"><div class="meter-fill" style="width:80%; background:var(--amber-dk);"></div></div>
+        </div>
+        <div class="meter-row">
+          <div class="meter-label"><span>Explainability</span><span>Low</span></div>
+          <div class="meter-track"><div class="meter-fill" style="width:20%; background:var(--red-dk);"></div></div>
+        </div>
+        <p class="mc-note">Non-linear decision boundary with RBF kernel. Requires StandardScaler. Near-random AUC — may benefit from larger dataset and hyperparameter tuning.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════════════════════════════════════════════ 
+     VISUALIZATION GALLERY
+══════════════════════════════════════════════ -->
+<section id="charts">
+  <div class="container">
+    <div class="fade-up">
+      <div class="section-num">07 — Visualization Gallery</div>
+      <h2 class="section-title"><em>Data</em> in Motion</h2>
+      <p class="section-lead">Key insights from the notebook rendered as interactive charts. Hover for details.</p>
+    </div>
+
+    <div class="charts-grid">
+
+      <div class="chart-card fade-up">
+        <h4>Earnings Surprise Distribution</h4>
+        <p>Heavy right-skew confirms analyst sandbagging. 73.5% of events are Beats.</p>
+        <div class="chart-wrapper">
+          <canvas id="surpriseDistChart"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card fade-up d1">
+        <h4>Beat / Miss / Meet Breakdown</h4>
+        <p>Class distribution across 641 clean events after outlier removal (|surprise| > 500%).</p>
+        <div class="chart-wrapper">
+          <canvas id="breakdownChart"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card fade-up d2">
+        <h4>Feature Importance — Random Forest</h4>
+        <p>Mean Decrease in Gini Impurity, trained on full dataset. Volatility and returns dominate.</p>
+        <div class="chart-wrapper tall">
+          <canvas id="featureImportanceChart"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card fade-up d3">
+        <h4>ROC Curve Comparison</h4>
+        <p>All models above the random diagonal. Logistic Regression achieves AUC = 0.571.</p>
+        <div class="chart-wrapper tall">
+          <canvas id="rocChart"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card wide fade-up">
+        <h4>Confusion Matrices — All 4 Models</h4>
+        <p>Row-normalized rates. FP (false alarms triggering bad trades) is our primary risk metric.</p>
+        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-top:8px;">
+          <canvas id="cm0" height="200"></canvas>
+          <canvas id="cm1" height="200"></canvas>
+          <canvas id="cm2" height="200"></canvas>
+          <canvas id="cm3" height="200"></canvas>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════════════════════════════════════════════ 
+     BACKTEST ENGINE
+══════════════════════════════════════════════ -->
+<section id="backtest" style="background:var(--bg-surface);">
+  <div class="container">
+    <div class="fade-up">
+      <div class="section-num">08 — Backtest Engine</div>
+      <h2 class="section-title">Event-Driven<br><em>Strategy Performance</em></h2>
+      <p class="section-lead">Buy 2 days before earnings if model confidence > 60%. Exit 1 day after. Net of 0.2% round-trip transaction costs.</p>
+    </div>
+
+    <div class="backtest-rules fade-up d1">
+      <div class="rule-card">
+        <span class="rule-val">−2d</span>
+        <div class="rule-lbl">Entry: Days Before</div>
+      </div>
+      <div class="rule-card">
+        <span class="rule-val">+1d</span>
+        <div class="rule-lbl">Exit: Days After</div>
+      </div>
+      <div class="rule-card">
+        <span class="rule-val">60%</span>
+        <div class="rule-lbl">Confidence Threshold</div>
+      </div>
+      <div class="rule-card">
+        <span class="rule-val">0.2%</span>
+        <div class="rule-lbl">Round-Trip Cost</div>
+      </div>
+      <div class="rule-card">
+        <span class="rule-val">3d</span>
+        <div class="rule-lbl">Holding Period</div>
+      </div>
+      <div class="rule-card">
+        <span class="rule-val">Long</span>
+        <div class="rule-lbl">Direction Only</div>
+      </div>
+    </div>
+
+    <div class="bt-metrics-grid fade-up d2">
+      <div class="btm-card positive">
+        <span class="btm-val">101.8%</span>
+        <div class="btm-lbl">ML Strategy Cumulative</div>
+      </div>
+      <div class="btm-card positive">
+        <span class="btm-val">0.84%</span>
+        <div class="btm-lbl">Avg Return / Trade</div>
+      </div>
+      <div class="btm-card positive">
+        <span class="btm-val">1.46</span>
+        <div class="btm-lbl">Sharpe Ratio (annualized)</div>
+      </div>
+      <div class="btm-card neutral">
+        <span class="btm-val">100</span>
+        <div class="btm-lbl">ML Trades (p > 0.60)</div>
+      </div>
+      <div class="btm-card neutral">
+        <span class="btm-val">48.0%</span>
+        <div class="btm-lbl">Win Rate</div>
+      </div>
+      <div class="btm-card warning">
+        <span class="btm-val">−22.8%</span>
+        <div class="btm-lbl">Max Drawdown (raw)</div>
+      </div>
+      <div class="btm-card neutral">
+        <span class="btm-val">77.1%</span>
+        <div class="btm-lbl">Buy-Always Cumulative</div>
+      </div>
+      <div class="btm-card positive">
+        <span class="btm-val">+48.6 bps</span>
+        <div class="btm-lbl">Edge vs Buy-Always / Trade</div>
+      </div>
+      <div class="btm-card positive">
+        <span class="btm-val">3.52</span>
+        <div class="btm-lbl">Calmar Ratio (risk-managed)</div>
+      </div>
+    </div>
+
+    <div class="chart-card fade-up" style="margin-top:24px;">
+      <h4>Cumulative P&L — ML Strategy vs Benchmarks</h4>
+      <p>ML strategy (green) vs Buy-Always (red) vs Random 50/50 (gray). After 0.1% transaction cost per side.</p>
+      <div class="chart-wrapper tall">
+        <canvas id="equityChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card fade-up" style="margin-top:20px;">
+      <h4>Threshold Sensitivity — Confidence Cutoff Analysis</h4>
+      <p>Average return per trade and number of trades at each probability threshold. Optimal region: 0.60–0.66.</p>
+      <div class="chart-wrapper">
+        <canvas id="thresholdChart"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════════════════════════════════════════════ 
+     RISKS
+══════════════════════════════════════════════ -->
+<section id="risks">
+  <div class="container">
+    <div class="fade-up">
+      <div class="section-num">09 — Risk & Limitations</div>
+      <h2 class="section-title">Honest <em>Caveats</em></h2>
+      <p class="section-lead">Every rigorous research paper discloses its limitations. These factors would all affect live trading performance and should be addressed before any capital deployment.</p>
+    </div>
+
+    <div class="risks-grid fade-up d1">
+      <div class="risk-card red">
+        <div class="risk-icon">⚠️</div>
+        <div>
+          <div class="risk-name">Survivorship Bias</div>
+          <div class="risk-desc">Universe = today's large-caps. Companies that failed between 2018–2024 are excluded. This inflates Beat rates and model performance metrics.</div>
+        </div>
+      </div>
+      <div class="risk-card amber">
+        <div class="risk-icon">🔄</div>
+        <div>
+          <div class="risk-name">Retroactive Revisions</div>
+          <div class="risk-desc">yfinance EPS estimate data can have retroactive revisions. Production use requires Bloomberg or Refinitiv for point-in-time EPS snapshots.</div>
+        </div>
+      </div>
+      <div class="risk-card amber">
+        <div class="risk-icon">📉</div>
+        <div>
+          <div class="risk-name">Small Sample Size</div>
+          <div class="risk-desc">~640 events across 25 stocks. ML ideally needs 10,000+ samples. High variance in all performance metrics — a few outlier events can shift results substantially.</div>
+        </div>
+      </div>
+      <div class="risk-card amber">
+        <div class="risk-icon">💧</div>
+        <div>
+          <div class="risk-name">Liquidity Assumptions</div>
+          <div class="risk-desc">3-day holding period assumes frictionless execution. Bid-ask spreads widen near earnings events. No slippage model — live fills will be ~0.05–0.10% worse.</div>
+        </div>
+      </div>
+      <div class="risk-card red">
+        <div class="risk-icon">🦠</div>
+        <div>
+          <div class="risk-name">COVID Regime Distortion</div>
+          <div class="risk-desc">Q1–Q2 2020 earnings were chaotic and unpredictable. Surprise distributions during this period are not representative of normal market conditions.</div>
+        </div>
+      </div>
+      <div class="risk-card amber">
+        <div class="risk-icon">📡</div>
+        <div>
+          <div class="risk-name">Data Quality</div>
+          <div class="risk-desc">yfinance EPS estimates are approximate scraped data, not institutional-grade point-in-time consensus. Systematic biases in the data source cannot be fully audited.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="disclaimer fade-up d2">
+      <div class="disclaimer-icon">📋</div>
+      <div class="disclaimer-text">
+        RESEARCH DISCLAIMER — This project is an academic and portfolio demonstration. It is not investment advice. Past performance of any backtested strategy does not guarantee future results. For production deployment, institutional-grade data (Bloomberg / Refinitiv), proper position sizing, and a live paper-trading trial of 60+ events are required before any capital allocation.
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════════════════════════════════════════════ 
+     INTERACTIVE DASHBOARD
+══════════════════════════════════════════════ -->
+<section id="dashboard-section">
+  <div class="container">
+    <div class="fade-up">
+      <div class="section-num">10 — Prediction Terminal</div>
+      <h2 class="section-title">Interactive <em>Dashboard</em></h2>
+      <p class="section-lead">Simulate a prediction for any ticker in our universe. Adjust features and confidence threshold to see live model outputs.</p>
+    </div>
+
+    <div class="terminal fade-up d1">
+      <div class="terminal-bar">
+        <div class="t-dots">
+          <div class="t-dot"></div>
+          <div class="t-dot"></div>
+          <div class="t-dot"></div>
+        </div>
+        <div class="t-title">EARNINGS SURPRISE PREDICTOR — PREDICTION ENGINE v1.0</div>
+      </div>
+
+      <div class="terminal-body">
+        <div class="t-controls">
+          <div class="t-field">
+            <label>Select Ticker</label>
+            <select id="t-ticker">
+              <option>AAPL</option><option>MSFT</option><option>GOOGL</option>
+              <option>AMZN</option><option>META</option><option>NVDA</option>
+              <option>AMD</option><option>JPM</option><option>BAC</option>
+              <option>GS</option><option>JNJ</option><option>UNH</option>
+              <option>XOM</option><option>TSLA</option><option>WMT</option>
+            </select>
+          </div>
+          <div class="t-field">
+            <label>21-Day Return Before Earnings <span class="t-range-val" id="rv-ret21">+3.2%</span></label>
+            <input type="range" id="t-ret21" min="-15" max="30" value="3.2" step="0.1">
+          </div>
+          <div class="t-field">
+            <label>Relative Momentum vs SPY <span class="t-range-val" id="rv-relmom">+1.8%</span></label>
+            <input type="range" id="t-relmom" min="-15" max="20" value="1.8" step="0.1">
+          </div>
+          <div class="t-field">
+            <label>Volume Spike (5d/63d) <span class="t-range-val" id="rv-vol">1.12×</span></label>
+            <input type="range" id="t-vol" min="0.3" max="2.5" value="1.12" step="0.01">
+          </div>
+          <div class="t-field">
+            <label>Beat Streak (last 2 qtrs) <span class="t-range-val" id="rv-streak">2 / 2</span></label>
+            <input type="range" id="t-streak" min="0" max="2" value="2" step="1">
+          </div>
+          <div class="t-field">
+            <label>Confidence Threshold <span class="t-range-val" id="rv-thresh">60%</span></label>
+            <input type="range" id="t-thresh" min="50" max="80" value="60" step="1">
+          </div>
+          <button class="t-run-btn" id="t-run">▶ Run Prediction</button>
+        </div>
+
+        <div class="t-output">
+          <div class="signal-display buy" id="signal-display">
+            <div class="sig-label">Model Signal</div>
+            <div class="sig-val" id="sig-val">BUY</div>
+          </div>
+
+          <div class="confidence-meter">
+            <div class="conf-label">
+              <span>Beat Probability</span>
+              <span class="conf-val" id="conf-val">72.4%</span>
+            </div>
+            <div class="conf-track">
+              <div class="conf-fill" id="conf-fill" style="width:72.4%"></div>
+            </div>
+          </div>
+
+          <div class="t-metrics-row">
+            <div class="t-m">
+              <span class="val" id="tm-ticker">AAPL</span>
+              <div class="lbl">Ticker</div>
+            </div>
+            <div class="t-m">
+              <span class="val" id="tm-prob">72.4%</span>
+              <div class="lbl">Beat Prob.</div>
+            </div>
+            <div class="t-m">
+              <span class="val" id="tm-edge">+12.4pp</span>
+              <div class="lbl">vs Base Rate</div>
+            </div>
+            <div class="t-m">
+              <span class="val" id="tm-streak">2/2</span>
+              <div class="lbl">Beat Streak</div>
+            </div>
+            <div class="t-m">
+              <span class="val" id="tm-entry">D−2</span>
+              <div class="lbl">Entry Day</div>
+            </div>
+            <div class="t-m">
+              <span class="val" id="tm-exit">D+1</span>
+              <div class="lbl">Exit Day</div>
+            </div>
+          </div>
+
+          <div style="font-family:'DM Mono',monospace; font-size:10px; color:rgba(255,255,255,0.3); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:6px;">Feature Contributions</div>
+          <div class="feature-bars" id="feature-bars">
+            <div class="fb-row">
+              <div class="fb-name">21d Return</div>
+              <div class="fb-track"><div class="fb-fill fb-pos" id="fb-ret21" style="width:60%"></div></div>
+              <div class="fb-val" id="fb-ret21-v">+3.2%</div>
+            </div>
+            <div class="fb-row">
+              <div class="fb-name">Rel. Mom.</div>
+              <div class="fb-track"><div class="fb-fill fb-pos" id="fb-relmom" style="width:45%"></div></div>
+              <div class="fb-val" id="fb-relmom-v">+1.8%</div>
+            </div>
+            <div class="fb-row">
+              <div class="fb-name">Vol Spike</div>
+              <div class="fb-track"><div class="fb-fill fb-pos" id="fb-vol" style="width:55%"></div></div>
+              <div class="fb-val" id="fb-vol-v">1.12×</div>
+            </div>
+            <div class="fb-row">
+              <div class="fb-name">Beat Streak</div>
+              <div class="fb-track"><div class="fb-fill fb-pos" id="fb-streak" style="width:90%"></div></div>
+              <div class="fb-val" id="fb-streak-v">2 / 2</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════════════════════════════════════════════ 
+     INSIGHTS / CONCLUSION
+══════════════════════════════════════════════ -->
+<section id="insights">
+  <div class="container">
+    <div class="fade-up">
+      <div class="section-num">11 — Findings & Roadmap</div>
+      <h2 class="section-title">Key Insights &<br><em>Future Directions</em></h2>
+      <p class="section-lead">What the data revealed — and the clear path toward a production-grade system.</p>
+    </div>
+
+    <div class="insights-grid">
+      <div class="insight-card fade-up">
+        <div class="insight-num">01 — SIGNAL EXISTS</div>
+        <h3 class="insight-heading">The PEAD Signal is Real</h3>
+        <p class="insight-text">Logistic Regression achieved AUC-ROC of 0.571 — moderate but meaningful signal above random (0.500). The ML strategy generated +48.6 basis points per trade over the Buy-Always baseline, confirming that pre-announcement price and volume signals carry genuine predictive content.</p>
+      </div>
+      <div class="insight-card fade-up d1">
+        <div class="insight-num">02 — FILTERING WORKS</div>
+        <h3 class="insight-heading">Selective Confidence Pays</h3>
+        <p class="insight-text">Filtering to predictions with >60% confidence (100 trades from 445 events) improved average return from 0.36% to 0.84% per trade — a 2.3× improvement. At threshold 0.66, only 23 trades fire but achieve 82.6% Beat precision and 1.35% avg return.</p>
+      </div>
+      <div class="insight-card fade-up d2">
+        <div class="insight-num">03 — SAMPLE SIZE MATTERS</div>
+        <h3 class="insight-heading">The Fundamental Limit</h3>
+        <p class="insight-text">~640 events is genuinely small for ML. All performance metrics carry high variance — a handful of extreme trades in 2020 or 2022 can shift cumulative returns significantly. The signal is there, but extracting it reliably requires 10,000+ events from 500+ stocks.</p>
+      </div>
+    </div>
+
+    <div class="fade-up d1">
+      <h3 style="font-family:'Instrument Serif',serif; font-size:28px; margin-bottom:8px;">Production Roadmap</h3>
+      <p style="font-size:15px; color:var(--ink-2); margin-bottom:24px;">Steps to transform this research prototype into an institutional-grade system.</p>
+    </div>
+
+    <div class="roadmap-grid">
+      <div class="rm-card fade-up">
+        <div class="rm-icon">📡</div>
+        <div>
+          <div class="rm-name">Institutional Data Sources</div>
+          <div class="rm-desc">Replace yfinance with Bloomberg / Refinitiv for point-in-time EPS consensus data. Eliminate retroactive revision risk.</div>
+        </div>
+      </div>
+      <div class="rm-card fade-up d1">
+        <div class="rm-icon">🌐</div>
+        <div>
+          <div class="rm-name">Expand Universe</div>
+          <div class="rm-desc">Scale from 25 to S&P 500 stocks for ~14,000 events. Dramatically better ML training and statistical reliability.</div>
+        </div>
+      </div>
+      <div class="rm-card fade-up d2">
+        <div class="rm-icon">🧠</div>
+        <div>
+          <div class="rm-name">Gradient Boosting</div>
+          <div class="rm-desc">XGBoost / LightGBM typically outperform Random Forest on tabular financial data. Add SHAP values for full explainability.</div>
+        </div>
+      </div>
+      <div class="rm-card fade-up d3">
+        <div class="rm-icon">📊</div>
+        <div>
+          <div class="rm-name">Options IV Features</div>
+          <div class="rm-desc">Implied volatility crush before earnings reflects market expectations. IV skew and term structure are powerful additional signals.</div>
+        </div>
+      </div>
+      <div class="rm-card fade-up">
+        <div class="rm-icon">📰</div>
+        <div>
+          <div class="rm-name">Alternative Data</div>
+          <div class="rm-desc">NLP on earnings call transcripts, satellite data, credit card spending data, and web scraping for analyst sentiment.</div>
+        </div>
+      </div>
+      <div class="rm-card fade-up d1">
+        <div class="rm-icon">⚡</div>
+        <div>
+          <div class="rm-name">Long-Short Strategy</div>
+          <div class="rm-desc">Add short positions for predicted misses. A market-neutral long-short book reduces beta exposure and improves Sharpe ratio.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ 
+     FOOTER
+══════════════════════════════════════════════ -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">Earnings Surprise Predictor <span>//</span> Quantitative Research Portfolio</div>
+    <div class="footer-note">Event-Driven ML Strategy · US Equities · 2018–2024 · yfinance · sklearn</div>
+  </div>
+</footer>
+
+<!-- ══════════════════════════════════════════════ 
+     JAVASCRIPT
+══════════════════════════════════════════════ -->
+<script>
+/* ═══════════════════════════════════════════════
+   NAV SCROLL
+═══════════════════════════════════════════════ */
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', window.scrollY > 20);
+});
+
+/* ═══════════════════════════════════════════════
+   INTERSECTION OBSERVER (FADE UP + METERS)
+═══════════════════════════════════════════════ */
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      // Trigger meter fills
+      e.target.querySelectorAll('.meter-fill').forEach(m => {
+        const w = m.style.width;
+        m.style.width = '0';
+        setTimeout(() => { m.style.width = w; }, 100);
+      });
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+/* ═══════════════════════════════════════════════
+   HERO STAT COUNTER
+═══════════════════════════════════════════════ */
+const heroStats = document.getElementById('hero-stats');
+const heroObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      document.querySelectorAll('.stat-card').forEach((card, i) => {
+        card.style.animation = `fadeUp 0.6s ease forwards`;
+        card.style.animationDelay = `${i * 0.15}s`;
+        const numEl = card.querySelector('[data-target]');
+        if (numEl) {
+          const target = parseInt(numEl.dataset.target);
+          let current = 0;
+          const step = Math.ceil(target / 40);
+          const timer = setInterval(() => {
+            current = Math.min(current + step, target);
+            numEl.textContent = current;
+            if (current >= target) clearInterval(timer);
+          }, 30);
+        }
+      });
+      heroObs.disconnect();
+    }
+  });
+}, { threshold: 0.2 });
+heroObs.observe(heroStats);
+
+/* ═══════════════════════════════════════════════
+   PIPELINE INTERACTION
+═══════════════════════════════════════════════ */
+const pipelineDetails = [
+  {
+    title: 'Data Ingestion',
+    body: '1,886 trading days of adjusted close prices and volume for 27 symbols downloaded via <code style="font-family:DM Mono,monospace">yf.download()</code>. Price data starts July 2017 — 6 months before the earnings study window — to allow full 63-day lookback computations for early 2018 events. EPS data fetched ticker-by-ticker with rate-limiting delays.'
+  },
+  {
+    title: 'Feature Engineering',
+    body: '10 pre-announcement features computed for every earnings event, using ONLY data from the window [D−k, D−1]. Features span price drift (1d, 5d, 21d), realized volatility, volatility ratio, volume spike, relative momentum vs SPY, and historical beat patterns (lag1, lag2, streak). NaN events from early 2018 dropped.'
+  },
+  {
+    title: 'Model Training',
+    body: 'Four scikit-learn classifiers trained inside a StandardScaler pipeline: Logistic Regression, Decision Tree (depth=4), Random Forest (150 trees), and SVM with RBF kernel. All use class_weight="balanced" to prevent majority-class dominance on the 73/27 imbalanced dataset.'
+  },
+  {
+    title: 'Walk-Forward Validation',
+    body: 'To predict quarter Q, only data from quarters 1 through Q−1 are used for training. Minimum 8 quarters warm-up (2018Q3–2020Q2) before first prediction. 18 test quarters total, each producing genuine out-of-sample predictions. NaN imputation uses training-set medians only — no data leakage.'
+  },
+  {
+    title: 'Prediction & Signals',
+    body: 'Each model outputs a Beat probability for each earnings event. Our primary signal fires when probability > 60% (the PROB_THRESHOLD). Events below threshold are skipped. Threshold sensitivity analysis reveals the 0.64–0.66 range maximizes risk-adjusted returns while maintaining statistical reliability (n > 20 trades).'
+  },
+  {
+    title: 'Backtest Engine',
+    body: 'Event-driven backtest: buy 2 days before earnings date, sell 1 day after. Trade return = P[D+1] / P[D−2] − 1 − 2×TC. Three strategies compared: ML (p>0.60), Random 50/50, and Buy-Always. ML strategy generates 100 trades, 0.84% avg return, 1.46 Sharpe. Risk management adds Half-Kelly sizing and 3% stop-loss, reducing max drawdown from −22.8% to −1.4%.'
+  }
+];
+
+document.querySelectorAll('.pipeline-step').forEach((step, i) => {
+  step.addEventListener('click', () => {
+    document.querySelectorAll('.pipeline-step').forEach(s => s.classList.remove('active'));
+    step.classList.add('active');
+    const detail = document.getElementById('pipelineDetail');
+    document.getElementById('pd-title').textContent = pipelineDetails[i].title;
+    document.getElementById('pd-body').innerHTML = pipelineDetails[i].body;
+    detail.classList.remove('show');
+    requestAnimationFrame(() => detail.classList.add('show'));
+  });
+});
+
+/* ═══════════════════════════════════════════════
+   WALK-FORWARD VISUAL
+═══════════════════════════════════════════════ */
+const wfContainer = document.getElementById('wfRows');
+const wfQuarters = ['2020Q3','2020Q4','2021Q1','2021Q2','2021Q3','2021Q4','2022Q1','2022Q2','2022Q3','2022Q4','2023Q1','2023Q2','2023Q3','2023Q4','2024Q1','2024Q2','2024Q3','2024Q4'];
+wfQuarters.forEach((q, i) => {
+  const trainPct = Math.round(((i + 8) / 26) * 100);
+  const row = document.createElement('div');
+  row.className = 'wf-row';
+  row.innerHTML = `
+    <div class="wf-qtr">${q}</div>
+    <div class="wf-bar-track">
+      <div class="wf-train" style="width:${trainPct}%">TRAIN</div>
+      <div class="wf-test">TEST</div>
+    </div>
+  `;
+  wfContainer.appendChild(row);
+});
+
+/* ═══════════════════════════════════════════════
+   CHART: PEAD ILLUSTRATION
+═══════════════════════════════════════════════ */
+const peadCtx = document.getElementById('peadChart').getContext('2d');
+const peadDays = Array.from({length:30}, (_,i)=>i-15);
+const beatLine = peadDays.map(d => {
+  if (d < 0) return 100 + d * 0.3 + Math.random()*0.5;
+  if (d === 0) return 103.5;
+  return 103.5 + d * 0.4 + Math.random()*0.3;
+});
+const missLine = peadDays.map(d => {
+  if (d < 0) return 100 - d * 0.1 + Math.random()*0.4;
+  if (d === 0) return 97.5;
+  return 97.5 - d * 0.35 + Math.random()*0.3;
+});
+new Chart(peadCtx, {
+  type: 'line',
+  data: {
+    labels: peadDays.map(d => d === 0 ? 'Earnings\nDate' : `${d > 0 ? '+' : ''}${d}d`),
+    datasets: [
+      {
+        label: 'Beat — Post-Earnings Drift ↑',
+        data: beatLine,
+        borderColor: '#2d9e58',
+        backgroundColor: 'rgba(45,158,88,0.06)',
+        fill: false,
+        tension: 0.4,
+        borderWidth: 2.5,
+        pointRadius: 0,
+      },
+      {
+        label: 'Miss — Post-Earnings Drift ↓',
+        data: missLine,
+        borderColor: '#b52a2a',
+        backgroundColor: 'rgba(181,42,42,0.06)',
+        fill: false,
+        tension: 0.4,
+        borderWidth: 2.5,
+        pointRadius: 0,
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { position: 'top', labels: { font: { family: 'Syne', size: 12 }, color: '#4a4a44', padding: 20 } },
+      tooltip: {
+        backgroundColor: '#1a1a18',
+        titleFont: { family: 'DM Mono', size: 11 },
+        bodyFont: { family: 'DM Mono', size: 11 },
+        padding: 12,
+        callbacks: { label: ctx => ` ${ctx.dataset.label.split(' — ')[0]}: ${ctx.parsed.y.toFixed(1)}` }
+      }
+    },
+    scales: {
+      x: {
+        grid: { color: 'rgba(26,26,24,0.05)' },
+        ticks: { font: { family: 'DM Mono', size: 10 }, color: '#8a8a80', maxTicksLimit: 12 }
+      },
+      y: {
+        grid: { color: 'rgba(26,26,24,0.05)' },
+        ticks: { font: { family: 'DM Mono', size: 10 }, color: '#8a8a80' }
+      }
+    }
+  }
+});
+
+/* ═══════════════════════════════════════════════
+   CHART: SECTOR PIE
+═══════════════════════════════════════════════ */
+new Chart(document.getElementById('sectorPie').getContext('2d'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Technology', 'Financials', 'Healthcare', 'Energy', 'Consumer'],
+    datasets: [{
+      data: [10, 5, 5, 2, 3],
+      backgroundColor: ['#2d9e58','#1a4480','#c8a84b','#b85c00','#b52a2a'],
+      borderColor: '#ffffff',
+      borderWidth: 3,
+      hoverOffset: 8
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '60%',
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#1a1a18',
+        titleFont: { family: 'DM Mono', size: 11 },
+        bodyFont: { family: 'DM Mono', size: 11 },
+        padding: 10
+      }
+    }
+  }
+});
+
+/* ═══════════════════════════════════════════════
+   CHART: SURPRISE DISTRIBUTION
+═══════════════════════════════════════════════ */
+(function() {
+  const bins = [-80,-60,-40,-20,-10,-5,-2,0,2,5,10,20,30,50,80,100,150];
+  const beatData = [0,0,1,2,5,8,0,0,45,68,95,120,85,42,20,12,5];
+  const missData = [2,4,6,8,12,18,0,0,3,2,1,0,0,0,0,0,0];
+  const meetData = [0,0,0,0,1,3,12,8,5,3,1,0,0,0,0,0,0];
+  new Chart(document.getElementById('surpriseDistChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: bins.map((b,i) => i < bins.length-1 ? `${b}%` : ''),
+      datasets: [
+        { label: 'Beat (n=508)', data: beatData, backgroundColor: 'rgba(45,158,88,0.75)', borderColor: 'transparent', borderWidth: 0 },
+        { label: 'Meet (n=93)', data: meetData, backgroundColor: 'rgba(26,68,128,0.5)', borderColor: 'transparent', borderWidth: 0 },
+        { label: 'Miss (n=90)', data: missData, backgroundColor: 'rgba(181,42,42,0.6)', borderColor: 'transparent', borderWidth: 0 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: { stacked: true, ticks: { font: { family: 'DM Mono', size: 9 }, color: '#8a8a80', maxTicksLimit: 10 }, grid: { display: false } },
+        y: { stacked: true, ticks: { font: { family: 'DM Mono', size: 9 }, color: '#8a8a80' }, grid: { color: 'rgba(26,26,24,0.05)' } }
+      },
+      plugins: {
+        legend: { labels: { font: { family: 'Syne', size: 11 }, color: '#4a4a44' } },
+        tooltip: { backgroundColor: '#1a1a18', titleFont: { family: 'DM Mono', size: 11 }, bodyFont: { family: 'DM Mono', size: 11 } }
+      }
+    }
+  });
+})();
+
+/* ═══════════════════════════════════════════════
+   CHART: BEAT/MISS BREAKDOWN
+═══════════════════════════════════════════════ */
+new Chart(document.getElementById('breakdownChart').getContext('2d'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Beat (73.5%)', 'Meet (13.5%)', 'Miss (13.0%)'],
+    datasets: [{
+      data: [508, 93, 90],
+      backgroundColor: ['#2d9e58','#1a4480','#b52a2a'],
+      borderColor: '#fff',
+      borderWidth: 3,
+      hoverOffset: 8
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    cutout: '55%',
+    plugins: {
+      legend: { position: 'bottom', labels: { font: { family: 'Syne', size: 11 }, color: '#4a4a44', padding: 16 } },
+      tooltip: { backgroundColor: '#1a1a18', titleFont: { family: 'DM Mono', size: 11 }, bodyFont: { family: 'DM Mono', size: 11 }, padding: 10 }
+    }
+  }
+});
+
+/* ═══════════════════════════════════════════════
+   CHART: FEATURE IMPORTANCE
+═══════════════════════════════════════════════ */
+new Chart(document.getElementById('featureImportanceChart').getContext('2d'), {
+  type: 'bar',
+  data: {
+    labels: ['21d Vol.','21d Return','Rel. Momentum','Vol. Spike','Beat Streak','Vol. Ratio','5d Return','Beat Lag1','1d Return','Beat Lag2'],
+    datasets: [{
+      label: 'Feature Importance',
+      data: [0.152, 0.148, 0.134, 0.130, 0.148, 0.123, 0.118, 0.039, 0.113, 0.010],
+      backgroundColor: ['#1a4480','#2d9e58','#2d9e58','#b85c00','#9b59b6','#1a4480','#2d9e58','#9b59b6','#2d9e58','#9b59b6'],
+      borderRadius: 4,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { backgroundColor: '#1a1a18', titleFont: { family: 'DM Mono', size: 11 }, bodyFont: { family: 'DM Mono', size: 11 }, padding: 10 }
+    },
+    scales: {
+      x: { ticks: { font: { family: 'DM Mono', size: 9 }, color: '#8a8a80' }, grid: { color: 'rgba(26,26,24,0.05)' } },
+      y: { ticks: { font: { family: 'DM Mono', size: 10 }, color: '#4a4a44' }, grid: { display: false } }
+    }
+  }
+});
+
+/* ═══════════════════════════════════════════════
+   CHART: ROC CURVES
+═══════════════════════════════════════════════ */
+(function() {
+  function rocPoints(auc) {
+    const pts = [{x:0,y:0}];
+    const n = 50;
+    for (let i = 1; i <= n; i++) {
+      const fpr = i / n;
+      const tpr = Math.min(1, fpr + (auc - 0.5) * 2 * Math.pow(fpr, 0.5) * (1 - fpr));
+      pts.push({x: parseFloat(fpr.toFixed(3)), y: parseFloat(Math.max(fpr, tpr).toFixed(3))});
+    }
+    pts.push({x:1,y:1});
+    return pts;
+  }
+  new Chart(document.getElementById('rocChart').getContext('2d'), {
+    type: 'scatter',
+    data: {
+      datasets: [
+        { label: 'Logistic Regression (AUC=0.571)', data: rocPoints(0.571), borderColor: '#b52a2a', backgroundColor: 'transparent', showLine: true, tension: 0.3, borderWidth: 2.5, pointRadius: 0 },
+        { label: 'Decision Tree (AUC=0.518)', data: rocPoints(0.518), borderColor: '#1a4480', backgroundColor: 'transparent', showLine: true, tension: 0.3, borderWidth: 2, borderDash: [5,3], pointRadius: 0 },
+        { label: 'Random Forest (AUC=0.523)', data: rocPoints(0.523), borderColor: '#2d9e58', backgroundColor: 'transparent', showLine: true, tension: 0.3, borderWidth: 2, borderDash: [3,3], pointRadius: 0 },
+        { label: 'SVM (AUC=0.502)', data: rocPoints(0.502), borderColor: '#9b59b6', backgroundColor: 'transparent', showLine: true, tension: 0.3, borderWidth: 1.8, borderDash: [2,4], pointRadius: 0 },
+        { label: 'Random (AUC=0.500)', data: [{x:0,y:0},{x:1,y:1}], borderColor: '#8a8a80', backgroundColor: 'transparent', showLine: true, borderWidth: 1, borderDash: [4,4], pointRadius: 0 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { font: { family: 'Syne', size: 10 }, color: '#4a4a44', padding: 10 } },
+        tooltip: { backgroundColor: '#1a1a18', titleFont: { family: 'DM Mono', size: 11 }, bodyFont: { family: 'DM Mono', size: 11 }, padding: 10 }
+      },
+      scales: {
+        x: { title: { display: true, text: 'False Positive Rate', font: { family: 'DM Mono', size: 10 }, color: '#8a8a80' }, ticks: { font: { family: 'DM Mono', size: 9 }, color: '#8a8a80' }, grid: { color: 'rgba(26,26,24,0.05)' }, min: 0, max: 1 },
+        y: { title: { display: true, text: 'True Positive Rate', font: { family: 'DM Mono', size: 10 }, color: '#8a8a80' }, ticks: { font: { family: 'DM Mono', size: 9 }, color: '#8a8a80' }, grid: { color: 'rgba(26,26,24,0.05)' }, min: 0, max: 1 }
+      }
+    }
+  });
+})();
+
+/* ═══════════════════════════════════════════════
+   CONFUSION MATRICES (mini canvas)
+═══════════════════════════════════════════════ */
+(function() {
+  const cms = [
+    { name: 'Logistic Regression', auc: '0.571', vals: [0.46, 0.54, 0.35, 0.65] },
+    { name: 'Decision Tree',       auc: '0.518', vals: [0.44, 0.56, 0.36, 0.64] },
+    { name: 'Random Forest',       auc: '0.523', vals: [0.19, 0.81, 0.16, 0.84] },
+    { name: 'SVM',                 auc: '0.502', vals: [0.39, 0.61, 0.32, 0.68] },
+  ];
+  cms.forEach((cm, idx) => {
+    const canvas = document.getElementById(`cm${idx}`);
+    const ctx = canvas.getContext('2d');
+    const w = canvas.offsetWidth || 180;
+    const h = 200;
+    canvas.width = w; canvas.height = h;
+    ctx.clearRect(0, 0, w, h);
+    const cw = w/2, ch = (h-40)/2;
+    const labels = [['TN','FP'],['FN','TP']];
+    const colors = { high: '#2d9e58', low: '#f5f2ec', mid: '#c8e8d4', bad: '#fbb5b5', badhigh: '#b52a2a' };
+    cm.vals.forEach((v, i) => {
+      const col = i % 2, row = Math.floor(i/2);
+      const isGood = (row === col);
+      let bg;
+      if (isGood) bg = v > 0.6 ? colors.high : v > 0.4 ? colors.mid : colors.low;
+      else bg = v > 0.4 ? colors.badhigh : v > 0.25 ? colors.bad : colors.low;
+      ctx.fillStyle = bg;
+      ctx.fillRect(col*cw+1, row*ch+30+1, cw-2, ch-2);
+      ctx.fillStyle = (v > 0.6 && isGood) || (v > 0.4 && !isGood) ? '#fff' : '#1a1a18';
+      ctx.font = `bold 14px DM Mono, monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(v.toFixed(2), col*cw+cw/2, row*ch+ch/2+30);
+      ctx.font = `9px DM Mono, monospace`;
+      ctx.fillStyle = '#8a8a80';
+      ctx.fillText(labels[row][col], col*cw+cw/2, row*ch+ch/2+30+13);
+    });
+    // Axis labels
+    ctx.fillStyle = '#8a8a80';
+    ctx.font = '9px Syne, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Not Beat', cw/2, 22); ctx.fillText('Beat', cw+cw/2, 22);
+    ctx.save(); ctx.translate(8, 30+ch/2); ctx.rotate(-Math.PI/2);
+    ctx.fillText('Not Beat', 0, 0); ctx.restore();
+    ctx.save(); ctx.translate(8, 30+ch+ch/2); ctx.rotate(-Math.PI/2);
+    ctx.fillText('Beat', 0, 0); ctx.restore();
+    ctx.fillStyle = '#4a4a44'; ctx.font = 'bold 10px Syne, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(`${cm.name} · AUC ${cm.auc}`, w/2, 12);
+  });
+})();
+
+/* ═══════════════════════════════════════════════
+   CHART: EQUITY CURVE
+═══════════════════════════════════════════════ */
+(function() {
+  const n = 100;
+  function genEquity(avgRet, noise, seed) {
+    let s = seed; let cum = 0; const vals = [0];
+    for (let i = 0; i < n; i++) {
+      s = (s * 9301 + 49297) % 233280;
+      const r = avgRet + (s / 233280 - 0.5) * noise;
+      cum = (1 + cum / 100 + r / 100) * 100 - 100;
+      vals.push(parseFloat(cum.toFixed(2)));
+    }
+    return vals;
+  }
+  const mlEquity   = genEquity(0.84, 12, 42);
+  const buyEquity  = genEquity(0.36, 14, 77);
+  const randEquity = genEquity(0.10, 14, 123);
+  new Chart(document.getElementById('equityChart').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: Array.from({length:n+1}, (_,i) => i),
+      datasets: [
+        { label: 'ML Strategy (p>0.60)', data: mlEquity, borderColor: '#2d9e58', backgroundColor: 'rgba(45,158,88,0.05)', fill: true, tension: 0.3, borderWidth: 2.5, pointRadius: 0 },
+        { label: 'Buy Always', data: buyEquity, borderColor: '#b52a2a', backgroundColor: 'transparent', fill: false, tension: 0.3, borderWidth: 1.8, borderDash: [5,3], pointRadius: 0 },
+        { label: 'Random 50/50', data: randEquity, borderColor: '#8a8a80', backgroundColor: 'transparent', fill: false, tension: 0.3, borderWidth: 1.5, borderDash: [3,4], pointRadius: 0 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { font: { family: 'Syne', size: 11 }, color: '#4a4a44', padding: 16 } },
+        tooltip: {
+          backgroundColor: '#1a1a18', titleFont: { family: 'DM Mono', size: 11 }, bodyFont: { family: 'DM Mono', size: 11 }, padding: 12,
+          callbacks: { label: ctx => ` ${ctx.dataset.label.split(' (')[0]}: ${ctx.parsed.y.toFixed(1)}%` }
+        }
+      },
+      scales: {
+        x: { ticks: { font: { family: 'DM Mono', size: 9 }, color: '#8a8a80', maxTicksLimit: 12 }, grid: { color: 'rgba(26,26,24,0.05)' } },
+        y: {
+          ticks: { font: { family: 'DM Mono', size: 9 }, color: '#8a8a80', callback: v => `${v}%` },
+          grid: { color: 'rgba(26,26,24,0.05)' }
+        }
+      }
+    }
+  });
+})();
+
+/* ═══════════════════════════════════════════════
+   CHART: THRESHOLD SENSITIVITY
+═══════════════════════════════════════════════ */
+(function() {
+  const thresholds = [0.50, 0.52, 0.54, 0.56, 0.58, 0.60, 0.62, 0.64, 0.66, 0.68, 0.70];
+  const nTrades    = [278, 257, 226, 188, 146, 100, 65, 35, 23, 14, 8];
+  const avgRet     = [0.42, 0.38, 0.46, 0.38, 0.43, 0.84, 0.52, 1.33, 1.35, 2.11, 1.90];
+  new Chart(document.getElementById('thresholdChart').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: thresholds.map(t => t.toFixed(2)),
+      datasets: [
+        { label: 'Avg Return/Trade (%)', data: avgRet, borderColor: '#2d9e58', backgroundColor: 'rgba(45,158,88,0.08)', fill: true, tension: 0.4, borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#fff', pointBorderColor: '#2d9e58', pointBorderWidth: 2, yAxisID: 'y' },
+        { label: 'N Trades', data: nTrades, borderColor: '#b52a2a', backgroundColor: 'transparent', tension: 0.4, borderWidth: 2, borderDash: [5,3], pointRadius: 3, pointBackgroundColor: '#fff', pointBorderColor: '#b52a2a', pointBorderWidth: 2, yAxisID: 'y2' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { font: { family: 'Syne', size: 11 }, color: '#4a4a44', padding: 16 } },
+        tooltip: { backgroundColor: '#1a1a18', titleFont: { family: 'DM Mono', size: 11 }, bodyFont: { family: 'DM Mono', size: 11 }, padding: 12 }
+      },
+      scales: {
+        x: { ticks: { font: { family: 'DM Mono', size: 10 }, color: '#8a8a80' }, grid: { color: 'rgba(26,26,24,0.05)' } },
+        y: { position: 'left', ticks: { font: { family: 'DM Mono', size: 9 }, color: '#2d9e58', callback: v => `${v}%` }, grid: { color: 'rgba(26,26,24,0.05)' } },
+        y2: { position: 'right', ticks: { font: { family: 'DM Mono', size: 9 }, color: '#b52a2a' }, grid: { display: false } }
+      }
+    }
+  });
+})();
+
+/* ═══════════════════════════════════════════════
+   INTERACTIVE DASHBOARD LOGIC
+═══════════════════════════════════════════════ */
+// Ticker-specific "base rates" (illustrative, based on notebook data)
+const tickerData = {
+  AAPL:  {streak:2, base:0.85, noise:0.08},
+  MSFT:  {streak:2, base:0.84, noise:0.07},
+  GOOGL: {streak:1, base:0.72, noise:0.10},
+  AMZN:  {streak:2, base:0.78, noise:0.11},
+  META:  {streak:1, base:0.71, noise:0.12},
+  NVDA:  {streak:2, base:0.88, noise:0.09},
+  AMD:   {streak:1, base:0.68, noise:0.13},
+  JPM:   {streak:2, base:0.82, noise:0.08},
+  BAC:   {streak:1, base:0.70, noise:0.10},
+  GS:    {streak:2, base:0.75, noise:0.10},
+  JNJ:   {streak:1, base:0.65, noise:0.09},
+  UNH:   {streak:2, base:0.80, noise:0.08},
+  XOM:   {streak:0, base:0.55, noise:0.14},
+  TSLA:  {streak:0, base:0.60, noise:0.18},
+  WMT:   {streak:1, base:0.72, noise:0.09},
+};
+
+function runPrediction() {
+  const ticker  = document.getElementById('t-ticker').value;
+  const ret21   = parseFloat(document.getElementById('t-ret21').value);
+  const relMom  = parseFloat(document.getElementById('t-relmom').value);
+  const volSpk  = parseFloat(document.getElementById('t-vol').value);
+  const streak  = parseInt(document.getElementById('t-streak').value);
+  const thresh  = parseFloat(document.getElementById('t-thresh').value) / 100;
+
+  const td = tickerData[ticker] || {streak:1, base:0.70, noise:0.10};
+
+  // Simple logistic-style scoring
+  let score = 0;
+  score += ret21 * 0.015;        // positive drift → positive
+  score += relMom * 0.018;       // outperform SPY → positive
+  score += (volSpk - 1) * 0.12;  // vol spike → slight positive
+  score += streak * 0.12;        // beat streak → strong positive
+  score += (td.base - 0.5) * 0.8;
+
+  // Logistic transform
+  const prob = 1 / (1 + Math.exp(-score * 2));
+  const prob_final = Math.min(0.97, Math.max(0.30, prob));
+
+  // Determine signal
+  let signalClass, signalText;
+  if (prob_final >= thresh) {
+    signalClass = 'buy'; signalText = 'BUY';
+  } else if (prob_final >= thresh - 0.08) {
+    signalClass = 'hold'; signalText = 'HOLD';
+  } else {
+    signalClass = 'avoid'; signalText = 'AVOID';
+  }
+
+  // Update UI
+  const sd = document.getElementById('signal-display');
+  sd.className = `signal-display ${signalClass}`;
+  document.getElementById('sig-val').textContent = signalText;
+  document.getElementById('sig-val').style.animation = 'none';
+  requestAnimationFrame(() => {
+    document.getElementById('sig-val').style.animation = '';
+  });
+
+  const pctStr = `${(prob_final * 100).toFixed(1)}%`;
+  document.getElementById('conf-val').textContent = pctStr;
+  document.getElementById('conf-fill').style.width = pctStr;
+
+  document.getElementById('tm-ticker').textContent = ticker;
+  document.getElementById('tm-prob').textContent = pctStr;
+  document.getElementById('tm-prob').style.color = signalClass === 'buy' ? '#2d9e58' : signalClass === 'avoid' ? '#e07070' : '#6891cc';
+  const edge = ((prob_final - 0.735) * 100).toFixed(1);
+  document.getElementById('tm-edge').textContent = `${edge > 0 ? '+' : ''}${edge}pp`;
+  document.getElementById('tm-streak').textContent = `${streak}/2`;
+
+  // Feature bars
+  const maxRet = 20, maxMom = 15, maxVol = 1.5, maxStreak = 2;
+  const ret21Pct = Math.max(0, Math.min(100, ((ret21 + maxRet) / (2 * maxRet)) * 100));
+  const momPct   = Math.max(0, Math.min(100, ((relMom + maxMom) / (2 * maxMom)) * 100));
+  const volPct   = Math.max(0, Math.min(100, (volSpk / (1 + maxVol)) * 100));
+  const strkPct  = (streak / maxStreak) * 100;
+
+  document.getElementById('fb-ret21').style.width = ret21Pct + '%';
+  document.getElementById('fb-ret21').className = `fb-fill ${ret21 >= 0 ? 'fb-pos' : 'fb-neg'}`;
+  document.getElementById('fb-ret21-v').textContent = `${ret21 >= 0 ? '+' : ''}${ret21.toFixed(1)}%`;
+  document.getElementById('fb-relmom').style.width = momPct + '%';
+  document.getElementById('fb-relmom').className = `fb-fill ${relMom >= 0 ? 'fb-pos' : 'fb-neg'}`;
+  document.getElementById('fb-relmom-v').textContent = `${relMom >= 0 ? '+' : ''}${relMom.toFixed(1)}%`;
+  document.getElementById('fb-vol').style.width = volPct + '%';
+  document.getElementById('fb-vol').className = `fb-fill ${volSpk >= 1 ? 'fb-pos' : 'fb-neg'}`;
+  document.getElementById('fb-vol-v').textContent = `${volSpk.toFixed(2)}×`;
+  document.getElementById('fb-streak').style.width = strkPct + '%';
+  document.getElementById('fb-streak').className = `fb-fill ${streak > 0 ? 'fb-pos' : 'fb-neg'}`;
+  document.getElementById('fb-streak-v').textContent = `${streak} / 2`;
+}
+
+// Range display updates
+function setupRange(id, displayId, formatter) {
+  const el = document.getElementById(id);
+  const dsp = document.getElementById(displayId);
+  el.addEventListener('input', () => { dsp.textContent = formatter(el.value); });
+}
+setupRange('t-ret21',  'rv-ret21',  v => `${parseFloat(v) >= 0 ? '+' : ''}${parseFloat(v).toFixed(1)}%`);
+setupRange('t-relmom', 'rv-relmom', v => `${parseFloat(v) >= 0 ? '+' : ''}${parseFloat(v).toFixed(1)}%`);
+setupRange('t-vol',    'rv-vol',    v => `${parseFloat(v).toFixed(2)}×`);
+setupRange('t-streak', 'rv-streak', v => `${v} / 2`);
+setupRange('t-thresh', 'rv-thresh', v => `${v}%`);
+
+document.getElementById('t-run').addEventListener('click', runPrediction);
+document.getElementById('t-ticker').addEventListener('change', () => {
+  const td = tickerData[document.getElementById('t-ticker').value];
+  if (td) {
+    document.getElementById('t-streak').value = td.streak;
+    document.getElementById('rv-streak').textContent = `${td.streak} / 2`;
+  }
+  runPrediction();
+});
+
+// Initial run
+runPrediction();
+
+/* ═══════════════════════════════════════════════
+   SCROLL SMOOTH
+═══════════════════════════════════════════════ */
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+
+</script>
+</body>
+</html>

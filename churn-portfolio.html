@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bank Customer Churn Prediction — GenAI Group</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f2ec;
+    --surface: #ffffff;
+    --surface-2: #f0ece3;
+    --text-primary: #1a1a18;
+    --text-secondary: #4a4a44;
+    --text-muted: #8a8a80;
+    --green-deep: #1a6b3a;
+    --green-mid: #2d9e58;
+    --green-tint: #e8f5ee;
+    --amber: #b85c00;
+    --amber-tint: #fff3e0;
+    --red: #b52a2a;
+    --red-tint: #fdeaea;
+    --blue: #1a4480;
+    --blue-tint: #e8eef8;
+    --gold: #c8a84b;
+    --border: #e8e4db;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: var(--text-primary);
+    color: #f5f2ec;
+    padding: 100px 24px 90px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 39px,
+      rgba(255,255,255,0.03) 39px,
+      rgba(255,255,255,0.03) 40px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 39px,
+      rgba(255,255,255,0.03) 39px,
+      rgba(255,255,255,0.03) 40px
+    );
+  }
+
+  .hero-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  .hero-tag {
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold);
+    border: 1px solid rgba(200,168,75,0.4);
+    padding: 5px 12px;
+    border-radius: 2px;
+    margin-bottom: 28px;
+  }
+
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.4rem, 6vw, 4.2rem);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    color: #f5f2ec;
+    margin-bottom: 16px;
+  }
+
+  .hero-subtitle {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: rgba(245,242,236,0.5);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+
+  .hero-desc {
+    font-size: 16px;
+    color: rgba(245,242,236,0.75);
+    max-width: 620px;
+    line-height: 1.7;
+    margin-bottom: 44px;
+  }
+
+  .hero-btns {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--green-mid);
+    color: #fff;
+    padding: 13px 26px;
+    border-radius: 3px;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background 0.2s, transform 0.15s;
+    letter-spacing: 0.01em;
+  }
+
+  .btn-primary:hover { background: var(--green-deep); transform: translateY(-1px); }
+
+  .btn-outline {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    color: rgba(245,242,236,0.85);
+    border: 1px solid rgba(245,242,236,0.3);
+    padding: 13px 26px;
+    border-radius: 3px;
+    font-size: 14px;
+    font-weight: 400;
+    text-decoration: none;
+    transition: border-color 0.2s, color 0.2s, transform 0.15s;
+    letter-spacing: 0.01em;
+  }
+
+  .btn-outline:hover { border-color: rgba(245,242,236,0.7); color: #f5f2ec; transform: translateY(-1px); }
+
+  /* ── SECTIONS ── */
+  section { padding: 80px 24px; }
+  section:nth-child(even) { background: var(--surface); }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .section-heading {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.6rem, 3vw, 2rem);
+    font-weight: 700;
+    color: var(--text-primary);
+    display: inline-block;
+    border-bottom: 2px solid var(--gold);
+    padding-bottom: 6px;
+    margin-bottom: 40px;
+    letter-spacing: -0.01em;
+  }
+
+  /* ── OVERVIEW CARDS ── */
+  .overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+  }
+
+  .metric-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 28px 24px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(26,26,24,0.08);
+  }
+
+  .metric-value {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--green-deep);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .metric-label {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .metric-sub {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 6px;
+  }
+
+  /* ── CALLOUT ── */
+  .callout-amber {
+    background: var(--amber-tint);
+    border-left: 4px solid var(--amber);
+    padding: 18px 22px;
+    border-radius: 0 4px 4px 0;
+    margin-top: 24px;
+  }
+
+  .callout-amber p {
+    color: var(--amber);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .callout-amber strong { font-weight: 600; }
+
+  /* ── TABLE ── */
+  .features-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(26,26,24,0.06);
+  }
+
+  .features-table thead tr {
+    background: var(--text-primary);
+    color: #f5f2ec;
+  }
+
+  .features-table th {
+    padding: 14px 18px;
+    text-align: left;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .features-table td {
+    padding: 13px 18px;
+    font-size: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .features-table tbody tr:nth-child(even) { background: var(--bg); }
+  .features-table tbody tr:last-child td { border-bottom: none; }
+  .features-table tbody tr:hover { background: var(--surface-2); }
+
+  .col-name {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--green-deep);
+    white-space: nowrap;
+  }
+
+  /* ── PIPELINE ── */
+  .pipeline-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+  }
+
+  .pipeline-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    position: relative;
+    padding-bottom: 28px;
+  }
+
+  .pipeline-step:last-child { padding-bottom: 0; }
+
+  .pipeline-step::before {
+    content: '';
+    position: absolute;
+    left: 18px;
+    top: 40px;
+    bottom: 0;
+    width: 2px;
+    background: var(--border);
+  }
+
+  .pipeline-step:last-child::before { display: none; }
+
+  .step-circle {
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--green-deep);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    position: relative;
+    z-index: 1;
+  }
+
+  .step-content { padding-top: 7px; }
+
+  .step-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  /* ── ML ALGORITHM CARDS ── */
+  .algo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 20px;
+  }
+
+  .algo-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 26px 22px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .algo-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(26,26,24,0.08);
+  }
+
+  .algo-card.best {
+    border-color: var(--green-deep);
+    border-top: 3px solid var(--green-deep);
+  }
+
+  .algo-card.unsupervised {
+    border-color: var(--blue);
+    border-top: 3px solid var(--blue);
+  }
+
+  .algo-badge {
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 3px 9px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+
+  .badge-baseline { background: var(--surface-2); color: var(--text-muted); }
+  .badge-improved { background: var(--amber-tint); color: var(--amber); }
+  .badge-best { background: var(--green-tint); color: var(--green-deep); }
+  .badge-segment { background: var(--blue-tint); color: var(--blue); }
+
+  .algo-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+  }
+
+  .algo-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+
+  .algo-metrics {
+    display: flex;
+    gap: 20px;
+  }
+
+  .algo-metric-item {}
+
+  .algo-metric-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.3rem;
+    color: var(--green-deep);
+    font-weight: 500;
+    line-height: 1;
+  }
+
+  .algo-card.unsupervised .algo-metric-val { color: var(--blue); }
+
+  .algo-metric-lbl {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 3px;
+  }
+
+  /* ── EDA FINDINGS ── */
+  .findings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+  }
+
+  .finding-card {
+    background: var(--surface);
+    border-radius: 6px;
+    padding: 20px 20px 20px 22px;
+    border: 1px solid var(--border);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  .finding-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(26,26,24,0.07);
+  }
+
+  .finding-card.red { border-left: 4px solid var(--red); }
+  .finding-card.green { border-left: 4px solid var(--green-mid); }
+  .finding-card.amber { border-left: 4px solid var(--amber); }
+  .finding-card.blue { border-left: 4px solid var(--blue); }
+
+  .finding-card strong {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--text-primary);
+    font-size: 14px;
+  }
+
+  /* ── FEATURE ENGINEERING ── */
+  .feat-eng-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+  }
+
+  .feat-eng-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 22px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .feat-eng-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(26,26,24,0.07);
+  }
+
+  .feat-eng-name {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--green-deep);
+    margin-bottom: 8px;
+    word-break: break-all;
+  }
+
+  .feat-eng-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  /* ── TECH STACK ── */
+  .tech-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .tech-pill {
+    background: var(--surface-2);
+    color: var(--text-secondary);
+    padding: 7px 16px;
+    border-radius: 30px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    transition: background 0.2s, color 0.2s;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .tech-pill:hover {
+    background: var(--green-tint);
+    color: var(--green-deep);
+    border-color: var(--green-mid);
+  }
+
+  /* ── CONCLUSION ── */
+  .conclusion-text {
+    font-size: 16px;
+    color: var(--text-secondary);
+    max-width: 760px;
+    line-height: 1.8;
+    margin-bottom: 36px;
+  }
+
+  .btn-cta-big {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--green-deep);
+    color: #fff;
+    padding: 15px 32px;
+    border-radius: 4px;
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background 0.2s, transform 0.15s;
+    letter-spacing: 0.01em;
+  }
+
+  .btn-cta-big:hover { background: var(--green-mid); transform: translateY(-2px); }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--text-primary);
+    padding: 28px 24px;
+    text-align: center;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+  }
+
+  footer span { color: var(--gold); margin: 0 6px; }
+
+  /* ── PROSE ── */
+  .prose {
+    font-size: 15px;
+    color: var(--text-secondary);
+    max-width: 760px;
+    line-height: 1.8;
+    margin-bottom: 24px;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 640px) {
+    .hero-btns { flex-direction: column; }
+    .btn-primary, .btn-outline { text-align: center; justify-content: center; }
+    .algo-metrics { flex-direction: column; gap: 10px; }
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero-inner > * {
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .hero-tag { animation-delay: 0s; }
+  .hero h1 { animation-delay: 0.1s; }
+  .hero-subtitle { animation-delay: 0.2s; }
+  .hero-desc { animation-delay: 0.3s; }
+  .hero-btns { animation-delay: 0.4s; }
+
+  /* small gold ornament */
+  .ornament {
+    display: inline-block;
+    color: var(--gold);
+    margin: 0 8px;
+    font-size: 0.8em;
+    opacity: 0.6;
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ HERO ══ -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">Portfolio Project · 2026</div>
+    <h1>Bank Customer Churn<br>Prediction</h1>
+    <p class="hero-subtitle">A Supervised Machine Learning Project — GenAI Group</p>
+    <p class="hero-desc">Predicting which bank customers are likely to leave using Logistic Regression, KNN, and Random Forest on 10,000 customer records.</p>
+    <div class="hero-btns">
+      <a href="https://colab.research.google.com/drive/1F9wG5xmkddum1Xu7jnAycKKARTzkdQk1" target="_blank" rel="noopener" class="btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10,8 16,12 10,16"/></svg>
+        View on Google Colab
+      </a>
+      <a href="#" class="btn-outline">
+        ← Back to Portfolio
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- ══ OVERVIEW CARDS ══ -->
+<section>
+  <div class="container">
+    <h2 class="section-heading">Project at a Glance</h2>
+    <div class="overview-grid">
+      <div class="metric-card">
+        <div class="metric-value">10K</div>
+        <div class="metric-label">Customers</div>
+        <div class="metric-sub">12 features per record · Kaggle dataset</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">86.45%</div>
+        <div class="metric-label">Best Accuracy</div>
+        <div class="metric-sub">Random Forest · Top performer</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">0.847</div>
+        <div class="metric-label">ROC-AUC</div>
+        <div class="metric-sub">Random Forest · Strong discriminative power</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">20.37%</div>
+        <div class="metric-label">Churn Rate</div>
+        <div class="metric-sub">~2,037 of 10,000 customers churned</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ BUSINESS PROBLEM ══ -->
+<section>
+  <div class="container">
+    <h2 class="section-heading">The Business Problem</h2>
+    <p class="prose">A bank wants to identify which customers are likely to leave (churn) so it can take proactive retention actions. Customer attrition is a costly challenge — acquiring a new customer typically costs five to seven times more than retaining an existing one. By predicting churn before it happens, the bank can intervene with targeted offers, personalised outreach, or loyalty programs to keep valuable customers.</p>
+    <div class="callout-amber">
+      <p><strong>Dataset:</strong> Bank Customer Churn — 10,000 customers, 12 features. <strong>Source:</strong> Kaggle. <strong>Target variable:</strong> <code style="background:rgba(184,92,0,0.1);padding:1px 5px;border-radius:2px;font-family:'DM Mono',monospace;font-size:13px;">churn</code> (binary: 1 = Churned, 0 = Stayed).</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FEATURES TABLE ══ -->
+<section>
+  <div class="container">
+    <h2 class="section-heading">Dataset Features</h2>
+    <table class="features-table">
+      <thead>
+        <tr>
+          <th>Column</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="col-name">customer_id</td><td>Unique customer identifier</td></tr>
+        <tr><td class="col-name">credit_score</td><td>Customer's credit score (350–850)</td></tr>
+        <tr><td class="col-name">country</td><td>Country of the customer — France, Spain, or Germany</td></tr>
+        <tr><td class="col-name">gender</td><td>Male / Female</td></tr>
+        <tr><td class="col-name">age</td><td>Age of the customer (18–92)</td></tr>
+        <tr><td class="col-name">tenure</td><td>Years the customer has been with the bank (0–10)</td></tr>
+        <tr><td class="col-name">balance</td><td>Account balance (0–250,898)</td></tr>
+        <tr><td class="col-name">products_number</td><td>Number of bank products used (1–4)</td></tr>
+        <tr><td class="col-name">credit_card</td><td>Has a credit card? (1 = Yes, 0 = No)</td></tr>
+        <tr><td class="col-name">active_member</td><td>Is an active member? (1 = Yes, 0 = No)</td></tr>
+        <tr><td class="col-name">estimated_salary</td><td>Estimated annual salary</td></tr>
+        <tr><td class="col-name">churn</td><td>Target — Did the customer leave? (1 = Yes, 0 = No)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══ PIPELINE ══ -->
+<section>
+  <div class="container">
+    <h2 class="section-heading">Project Pipeline</h2>
+    <div class="pipeline-steps">
+      <div class="pipeline-step">
+        <div class="step-circle">0</div>
+        <div class="step-content">
+          <div class="step-title">Import Libraries</div>
+          <div style="font-size:13px;color:var(--text-muted);margin-top:3px;">pandas, numpy, matplotlib, seaborn, scikit-learn</div>
+        </div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-circle">1</div>
+        <div class="step-content">
+          <div class="step-title">Load Data</div>
+          <div style="font-size:13px;color:var(--text-muted);margin-top:3px;">Read CSV → DataFrame, inspect shape and types</div>
+        </div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-circle">2</div>
+        <div class="step-content">
+          <div class="step-title">Exploratory Data Analysis</div>
+          <div style="font-size:13px;color:var(--text-muted);margin-top:3px;">Distributions, correlations, class imbalance, categorical breakdowns</div>
+        </div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-circle">3</div>
+        <div class="step-content">
+          <div class="step-title">Data Preprocessing</div>
+          <div style="font-size:13px;color:var(--text-muted);margin-top:3px;">Handle nulls, drop IDs, LabelEncode categorical columns</div>
+        </div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-circle">4</div>
+        <div class="step-content">
+          <div class="step-title">Train-Test Split &amp; Scaling</div>
+          <div style="font-size:13px;color:var(--text-muted);margin-top:3px;">80/20 stratified split · StandardScaler normalization</div>
+        </div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-circle">5</div>
+        <div class="step-content">
+          <div class="step-title">ML Algorithms &amp; Visualisation</div>
+          <div style="font-size:13px;color:var(--text-muted);margin-top:3px;">Train LR, KNN, Random Forest · confusion matrices, ROC curves</div>
+        </div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-circle">6</div>
+        <div class="step-content">
+          <div class="step-title">Feature Engineering &amp; KMeans Clustering</div>
+          <div style="font-size:13px;color:var(--text-muted);margin-top:3px;">4 new features · elbow method · 3 customer segments</div>
+        </div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-circle">7</div>
+        <div class="step-content">
+          <div class="step-title">Conclusion</div>
+          <div style="font-size:13px;color:var(--text-muted);margin-top:3px;">Model comparison · key churn drivers · segment insights</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ ALGORITHMS ══ -->
+<section>
+  <div class="container">
+    <h2 class="section-heading">Algorithms Used</h2>
+    <div class="algo-grid">
+      <div class="algo-card">
+        <span class="algo-badge badge-baseline">Baseline</span>
+        <div class="algo-title">Logistic Regression</div>
+        <p class="algo-desc">Predicts churn probability via a linear decision boundary. Fast, interpretable, and effective as a baseline model.</p>
+        <div class="algo-metrics">
+          <div class="algo-metric-item">
+            <div class="algo-metric-val">80.50%</div>
+            <div class="algo-metric-lbl">Accuracy</div>
+          </div>
+          <div class="algo-metric-item">
+            <div class="algo-metric-val">0.771</div>
+            <div class="algo-metric-lbl">ROC-AUC</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="algo-card">
+        <span class="algo-badge badge-improved">Improved</span>
+        <div class="algo-title">KNN (K=17)</div>
+        <p class="algo-desc">Classifies by majority vote from the 17 nearest neighbours. Optimal K found via 5-fold cross-validation.</p>
+        <div class="algo-metrics">
+          <div class="algo-metric-item">
+            <div class="algo-metric-val">83.70%</div>
+            <div class="algo-metric-lbl">Accuracy</div>
+          </div>
+          <div class="algo-metric-item">
+            <div class="algo-metric-val">0.813</div>
+            <div class="algo-metric-lbl">ROC-AUC</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="algo-card best">
+        <span class="algo-badge badge-best">★ Best Model</span>
+        <div class="algo-title">Random Forest</div>
+        <p class="algo-desc">Ensemble of 100 decision trees. Handles non-linear relationships naturally and provides feature importance rankings.</p>
+        <div class="algo-metrics">
+          <div class="algo-metric-item">
+            <div class="algo-metric-val">86.45%</div>
+            <div class="algo-metric-lbl">Accuracy</div>
+          </div>
+          <div class="algo-metric-item">
+            <div class="algo-metric-val">0.847</div>
+            <div class="algo-metric-lbl">ROC-AUC</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="algo-card unsupervised">
+        <span class="algo-badge badge-segment">Segmentation</span>
+        <div class="algo-title">KMeans Clustering</div>
+        <p class="algo-desc">Unsupervised grouping of customers by similarity. Elbow method selected K=3, revealing 3 segments with distinct churn profiles.</p>
+        <div class="algo-metrics">
+          <div class="algo-metric-item">
+            <div class="algo-metric-val" style="color:var(--blue);">3</div>
+            <div class="algo-metric-lbl">Segments</div>
+          </div>
+          <div class="algo-metric-item">
+            <div class="algo-metric-val" style="color:var(--blue);">47%↔13%</div>
+            <div class="algo-metric-lbl">Churn Range</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ EDA FINDINGS ══ -->
+<section>
+  <div class="container">
+    <h2 class="section-heading">Key Findings from EDA</h2>
+    <div class="findings-grid">
+      <div class="finding-card red">
+        <strong>Class Imbalance</strong>
+        ~80% of customers stayed while ~20% churned — the dataset is imbalanced, requiring careful evaluation beyond raw accuracy.
+      </div>
+      <div class="finding-card green">
+        <strong>Age is the Strongest Predictor</strong>
+        Churned customers tend to be older, with a positive correlation of 0.29 with churn — the highest among all features.
+      </div>
+      <div class="finding-card amber">
+        <strong>Germany Stands Out</strong>
+        Germany has a significantly higher churn rate compared to France and Spain, suggesting regional factors worth investigating.
+      </div>
+      <div class="finding-card blue">
+        <strong>Active Members Stay Longer</strong>
+        Active membership has a negative correlation of −0.16 with churn — engaged customers are far less likely to leave.
+      </div>
+      <div class="finding-card red">
+        <strong>Higher Balances, Higher Churn</strong>
+        Churned customers tend to have higher account balances, possibly indicating unmet financial needs or better offers elsewhere.
+      </div>
+      <div class="finding-card green">
+        <strong>3 Distinct Customer Segments</strong>
+        KMeans revealed: Cluster 0 (older, 47% churn), Cluster 1 (younger, high balance, 16% churn), Cluster 2 (younger, low balance, 13% churn).
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FEATURE ENGINEERING ══ -->
+<section>
+  <div class="container">
+    <h2 class="section-heading">Feature Engineering</h2>
+    <p class="prose">Four new features were crafted from existing columns to capture relationships that raw data misses — improving the model's ability to detect churn signals.</p>
+    <div class="feat-eng-grid">
+      <div class="feat-eng-card">
+        <div class="feat-eng-name">balance_salary_ratio</div>
+        <div class="feat-eng-desc">Account balance relative to estimated salary. A high ratio may indicate financial stress or dependency on bank funds.</div>
+      </div>
+      <div class="feat-eng-card">
+        <div class="feat-eng-name">age_tenure_ratio</div>
+        <div class="feat-eng-desc">Customer age divided by tenure — captures how long they have been with the bank relative to their life stage.</div>
+      </div>
+      <div class="feat-eng-card">
+        <div class="feat-eng-name">products_per_tenure</div>
+        <div class="feat-eng-desc">Product usage intensity over time — customers who adopt fewer products over a longer tenure may be disengaged.</div>
+      </div>
+      <div class="feat-eng-card">
+        <div class="feat-eng-name">is_zero_balance</div>
+        <div class="feat-eng-desc">Binary flag: 1 if the customer holds zero account balance. Zero-balance accounts are disproportionately common among churners.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ TECH STACK ══ -->
+<section>
+  <div class="container">
+    <h2 class="section-heading">Tech Stack</h2>
+    <div class="tech-pills">
+      <span class="tech-pill">Python</span>
+      <span class="tech-pill">pandas</span>
+      <span class="tech-pill">NumPy</span>
+      <span class="tech-pill">matplotlib</span>
+      <span class="tech-pill">seaborn</span>
+      <span class="tech-pill">scikit-learn</span>
+      <span class="tech-pill">Google Colab</span>
+      <span class="tech-pill">Kaggle Dataset</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══ CONCLUSION ══ -->
+<section>
+  <div class="container">
+    <h2 class="section-heading">Conclusion</h2>
+    <p class="conclusion-text">Random Forest outperformed all other models with 86.45% accuracy and a ROC-AUC of 0.847. Key churn drivers are age, account balance, and active membership status. KMeans clustering revealed 3 distinct customer segments with very different churn rates — enabling targeted, data-driven retention strategies for each group.</p>
+    <a href="https://colab.research.google.com/drive/1F9wG5xmkddum1Xu7jnAycKKARTzkdQk1" target="_blank" rel="noopener" class="btn-cta-big">
+      View Full Notebook on Google Colab →
+    </a>
+  </div>
+</section>
+
+<!-- ══ FOOTER ══ -->
+<footer>
+  Bank Customer Churn Prediction <span>·</span> GenAI Group <span>·</span> 2026
+</footer>
+
+</body>
+</html>

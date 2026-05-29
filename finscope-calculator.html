@@ -1,0 +1,3247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinScope — Financial Calculator Suite</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0d0f;
+  --surface: #141417;
+  --surface2: #1c1c21;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --accent: #c8f04c;
+  --accent2: #7dffc4;
+  --accent3: #f0a94c;
+  --text: #f0ede8;
+  --muted: #8a8a9a;
+  --muted2: #5a5a6a;
+  --red: #ff6b6b;
+  --blue: #6bb5ff;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* HEADER */
+.header {
+  border-bottom: 1px solid var(--border);
+  padding: 1.5rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(13,13,15,0.95);
+  backdrop-filter: blur(12px);
+}
+
+.logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: -0.5px;
+}
+
+.logo span { color: var(--text); }
+
+.header-subtitle {
+  color: var(--muted);
+  font-size: 12px;
+  border-left: 1px solid var(--border2);
+  padding-left: 1rem;
+  margin-left: 0.5rem;
+}
+
+.header-search {
+  margin-left: auto;
+  position: relative;
+}
+
+.header-search input {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  padding: 0.5rem 1rem 0.5rem 2.2rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  width: 240px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.header-search input:focus { border-color: var(--accent); }
+
+.search-icon {
+  position: absolute;
+  left: 0.7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* LAYOUT */
+.layout { display: flex; min-height: calc(100vh - 65px); }
+
+/* SIDEBAR */
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  padding: 1.5rem 0;
+  position: sticky;
+  top: 65px;
+  height: calc(100vh - 65px);
+  overflow-y: auto;
+}
+
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+.sidebar-category {
+  display: block;
+  padding: 0.5rem 1.5rem;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  font-family: 'DM Sans', sans-serif;
+  line-height: 1.4;
+}
+
+.sidebar-category:hover { color: var(--text); background: var(--surface2); }
+.sidebar-category.active { color: var(--accent); background: rgba(200,240,76,0.06); border-right: 2px solid var(--accent); }
+
+.sidebar-label {
+  padding: 1.5rem 1.5rem 0.4rem;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--muted2);
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* MAIN */
+.main {
+  flex: 1;
+  padding: 2rem;
+  max-width: 900px;
+}
+
+/* CATEGORY HEADER */
+.cat-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.cat-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.3rem;
+}
+
+.cat-desc { color: var(--muted); font-size: 13px; }
+
+/* CALCULATOR GRID */
+.calc-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 700px) { .calc-grid { grid-template-columns: 1fr; } }
+
+/* CALCULATOR CARD */
+.calc-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  transition: border-color 0.2s;
+}
+
+.calc-card:hover { border-color: var(--border2); }
+
+.calc-name {
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--text);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.calc-tag {
+  font-size: 10px;
+  background: rgba(200,240,76,0.1);
+  color: var(--accent);
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-family: 'DM Mono', monospace;
+  margin-left: auto;
+}
+
+/* FORM ELEMENTS */
+.field { margin-bottom: 0.75rem; }
+
+.field label {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 0.3rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.field input, .field select {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  padding: 0.5rem 0.75rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+  appearance: none;
+}
+
+.field input:focus, .field select:focus { border-color: var(--accent); }
+
+.field select { cursor: pointer; }
+
+/* CALCULATE BUTTON */
+.calc-btn {
+  width: 100%;
+  background: var(--accent);
+  color: #0d0d0f;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.6rem;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  letter-spacing: 0.03em;
+  margin-top: 0.5rem;
+}
+
+.calc-btn:hover { opacity: 0.9; }
+.calc-btn:active { transform: scale(0.98); }
+
+/* RESULT */
+.result {
+  margin-top: 0.75rem;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+  display: none;
+}
+
+.result.show { display: block; }
+
+.result-label {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.25rem;
+}
+
+.result-value {
+  font-family: 'DM Mono', monospace;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--accent);
+}
+
+.result-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 0.3rem;
+  line-height: 1.5;
+}
+
+/* AMORT TABLE */
+.amort-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  margin-top: 0.5rem;
+}
+
+.amort-table th {
+  color: var(--muted);
+  text-align: right;
+  padding: 0.3rem 0.5rem;
+  font-weight: 500;
+  border-bottom: 1px solid var(--border);
+}
+
+.amort-table th:first-child { text-align: left; }
+
+.amort-table td {
+  padding: 0.25rem 0.5rem;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+
+.amort-table td:first-child { text-align: left; color: var(--muted); }
+
+.amort-scroll { max-height: 180px; overflow-y: auto; margin-top: 0.5rem; }
+.amort-scroll::-webkit-scrollbar { width: 3px; }
+.amort-scroll::-webkit-scrollbar-thumb { background: var(--border2); }
+
+/* FULL WIDTH CARD */
+.calc-card.full { grid-column: 1 / -1; }
+
+/* SEARCH RESULTS */
+.search-results {
+  display: none;
+}
+
+.search-results.show {
+  display: block;
+}
+
+.search-result-item {
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 13px;
+  transition: all 0.15s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.search-result-item:hover { background: var(--surface2); color: var(--text); }
+
+.search-cat-badge {
+  font-size: 10px;
+  color: var(--muted2);
+  font-family: 'DM Mono', monospace;
+}
+
+/* MULTI RESULT */
+.multi-result { margin-top: 0.4rem; }
+.multi-result .r-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.multi-result .r-row:last-child { border-bottom: none; }
+.multi-result .r-k { color: var(--muted); }
+.multi-result .r-v { font-family: 'DM Mono', monospace; color: var(--accent); }
+.multi-result .r-v.neg { color: var(--red); }
+.multi-result .r-v.pos { color: var(--accent2); }
+
+/* SECTION hidden */
+.section { display: none; }
+.section.active { display: block; }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">Fin<span>Scope</span></div>
+  <div class="header-subtitle">133 Financial Calculators</div>
+  <div class="header-search">
+    <span class="search-icon">⌕</span>
+    <input type="text" id="globalSearch" placeholder="Search calculators..." oninput="handleSearch(this.value)">
+  </div>
+</header>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-label">Categories</div>
+    <button class="sidebar-category active" onclick="showCat('tvm')">Time Value of Money</button>
+    <button class="sidebar-category" onclick="showCat('loans')">Loans &amp; Personal Finance</button>
+    <button class="sidebar-category" onclick="showCat('savings')">Savings &amp; Retirement</button>
+    <button class="sidebar-category" onclick="showCat('equity')">Equity &amp; Stock Valuation</button>
+    <button class="sidebar-category" onclick="showCat('corp')">Corporate Finance</button>
+    <button class="sidebar-category" onclick="showCat('fsa')">Financial Statement Analysis</button>
+    <button class="sidebar-category" onclick="showCat('portfolio')">Portfolio &amp; Investment</button>
+    <button class="sidebar-category" onclick="showCat('bonds')">Fixed Income &amp; Bonds</button>
+    <button class="sidebar-category" onclick="showCat('deriv')">Derivatives &amp; Options</button>
+    <button class="sidebar-category" onclick="showCat('forex')">Forex &amp; Macro</button>
+    <button class="sidebar-category" onclick="showCat('realestate')">Real Estate</button>
+    <button class="sidebar-category" onclick="showCat('startup')">Startup &amp; VC / PE</button>
+    <button class="sidebar-category" onclick="showCat('tax')">Tax &amp; Returns</button>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- SEARCH RESULTS -->
+    <div id="searchPane" class="search-results">
+      <div class="cat-header">
+        <div class="cat-title">Search Results</div>
+        <div class="cat-desc" id="searchCount"></div>
+      </div>
+      <div id="searchList"></div>
+    </div>
+
+    <!-- TVM -->
+    <div class="section active" id="sec-tvm">
+      <div class="cat-header">
+        <div class="cat-title">Time Value of Money</div>
+        <div class="cat-desc">Core TVM concepts: PV, FV, annuities, and compounding.</div>
+      </div>
+      <div class="calc-grid">
+
+        <!-- PV -->
+        <div class="calc-card">
+          <div class="calc-name">Present Value (PV) <span class="calc-tag">TVM</span></div>
+          <div class="field"><label>Future Value (₹)</label><input type="number" id="pv_fv" placeholder="100000"></div>
+          <div class="field"><label>Rate per period (%)</label><input type="number" id="pv_r" placeholder="8"></div>
+          <div class="field"><label>Number of periods</label><input type="number" id="pv_n" placeholder="10"></div>
+          <button class="calc-btn" onclick="calcPV()">Calculate</button>
+          <div class="result" id="res_pv">
+            <div class="result-label">Present Value</div>
+            <div class="result-value" id="rv_pv"></div>
+            <div class="result-sub" id="rs_pv"></div>
+          </div>
+        </div>
+
+        <!-- FV -->
+        <div class="calc-card">
+          <div class="calc-name">Future Value (FV) <span class="calc-tag">TVM</span></div>
+          <div class="field"><label>Present Value (₹)</label><input type="number" id="fv_pv" placeholder="50000"></div>
+          <div class="field"><label>Rate per period (%)</label><input type="number" id="fv_r" placeholder="10"></div>
+          <div class="field"><label>Number of periods</label><input type="number" id="fv_n" placeholder="10"></div>
+          <button class="calc-btn" onclick="calcFV()">Calculate</button>
+          <div class="result" id="res_fv">
+            <div class="result-label">Future Value</div>
+            <div class="result-value" id="rv_fv"></div>
+            <div class="result-sub" id="rs_fv"></div>
+          </div>
+        </div>
+
+        <!-- Simple Interest -->
+        <div class="calc-card">
+          <div class="calc-name">Simple Interest <span class="calc-tag">TVM</span></div>
+          <div class="field"><label>Principal (₹)</label><input type="number" id="si_p" placeholder="100000"></div>
+          <div class="field"><label>Rate (% per annum)</label><input type="number" id="si_r" placeholder="7"></div>
+          <div class="field"><label>Time (years)</label><input type="number" id="si_t" placeholder="5"></div>
+          <button class="calc-btn" onclick="calcSI()">Calculate</button>
+          <div class="result" id="res_si">
+            <div class="result-label">Simple Interest</div>
+            <div class="result-value" id="rv_si"></div>
+            <div class="result-sub" id="rs_si"></div>
+          </div>
+        </div>
+
+        <!-- Compound Interest -->
+        <div class="calc-card">
+          <div class="calc-name">Compound Interest <span class="calc-tag">TVM</span></div>
+          <div class="field"><label>Principal (₹)</label><input type="number" id="ci_p" placeholder="100000"></div>
+          <div class="field"><label>Rate (% per annum)</label><input type="number" id="ci_r" placeholder="10"></div>
+          <div class="field"><label>Time (years)</label><input type="number" id="ci_t" placeholder="10"></div>
+          <div class="field"><label>Compounding</label>
+            <select id="ci_n"><option value="1">Annually</option><option value="2">Semi-annually</option><option value="4">Quarterly</option><option value="12">Monthly</option><option value="365">Daily</option></select>
+          </div>
+          <button class="calc-btn" onclick="calcCI()">Calculate</button>
+          <div class="result" id="res_ci">
+            <div class="result-label">Maturity Amount</div>
+            <div class="result-value" id="rv_ci"></div>
+            <div class="result-sub" id="rs_ci"></div>
+          </div>
+        </div>
+
+        <!-- Annuity PV -->
+        <div class="calc-card">
+          <div class="calc-name">Annuity PV <span class="calc-tag">TVM</span></div>
+          <div class="field"><label>Periodic Payment (₹)</label><input type="number" id="apv_pmt" placeholder="10000"></div>
+          <div class="field"><label>Rate per period (%)</label><input type="number" id="apv_r" placeholder="8"></div>
+          <div class="field"><label>Number of periods</label><input type="number" id="apv_n" placeholder="12"></div>
+          <div class="field"><label>Type</label>
+            <select id="apv_type"><option value="0">Ordinary (end)</option><option value="1">Due (beginning)</option></select>
+          </div>
+          <button class="calc-btn" onclick="calcAnnuityPV()">Calculate</button>
+          <div class="result" id="res_apv">
+            <div class="result-label">Present Value of Annuity</div>
+            <div class="result-value" id="rv_apv"></div>
+          </div>
+        </div>
+
+        <!-- Annuity FV -->
+        <div class="calc-card">
+          <div class="calc-name">Annuity FV <span class="calc-tag">TVM</span></div>
+          <div class="field"><label>Periodic Payment (₹)</label><input type="number" id="afv_pmt" placeholder="5000"></div>
+          <div class="field"><label>Rate per period (%)</label><input type="number" id="afv_r" placeholder="8"></div>
+          <div class="field"><label>Number of periods</label><input type="number" id="afv_n" placeholder="24"></div>
+          <div class="field"><label>Type</label>
+            <select id="afv_type"><option value="0">Ordinary (end)</option><option value="1">Due (beginning)</option></select>
+          </div>
+          <button class="calc-btn" onclick="calcAnnuityFV()">Calculate</button>
+          <div class="result" id="res_afv">
+            <div class="result-label">Future Value of Annuity</div>
+            <div class="result-value" id="rv_afv"></div>
+          </div>
+        </div>
+
+        <!-- Perpetuity -->
+        <div class="calc-card">
+          <div class="calc-name">Perpetuity Value <span class="calc-tag">TVM</span></div>
+          <div class="field"><label>Annual Payment (₹)</label><input type="number" id="perp_c" placeholder="50000"></div>
+          <div class="field"><label>Discount Rate (%)</label><input type="number" id="perp_r" placeholder="10"></div>
+          <div class="field"><label>Growth Rate (%) <em style="font-style:normal;color:var(--muted)">optional</em></label><input type="number" id="perp_g" placeholder="0"></div>
+          <button class="calc-btn" onclick="calcPerpetuity()">Calculate</button>
+          <div class="result" id="res_perp">
+            <div class="result-label">Perpetuity Value</div>
+            <div class="result-value" id="rv_perp"></div>
+            <div class="result-sub" id="rs_perp"></div>
+          </div>
+        </div>
+
+        <!-- Growing Annuity -->
+        <div class="calc-card">
+          <div class="calc-name">Growing Annuity PV <span class="calc-tag">TVM</span></div>
+          <div class="field"><label>First Payment (₹)</label><input type="number" id="ga_pmt" placeholder="10000"></div>
+          <div class="field"><label>Discount Rate (% pa)</label><input type="number" id="ga_r" placeholder="10"></div>
+          <div class="field"><label>Growth Rate (% pa)</label><input type="number" id="ga_g" placeholder="4"></div>
+          <div class="field"><label>Number of periods</label><input type="number" id="ga_n" placeholder="10"></div>
+          <button class="calc-btn" onclick="calcGrowingAnnuity()">Calculate</button>
+          <div class="result" id="res_ga">
+            <div class="result-label">Growing Annuity PV</div>
+            <div class="result-value" id="rv_ga"></div>
+          </div>
+        </div>
+
+        <!-- Continuous Compounding -->
+        <div class="calc-card">
+          <div class="calc-name">Continuous Compounding <span class="calc-tag">TVM</span></div>
+          <div class="field"><label>Principal (₹)</label><input type="number" id="cc_p" placeholder="100000"></div>
+          <div class="field"><label>Nominal Rate (% pa)</label><input type="number" id="cc_r" placeholder="8"></div>
+          <div class="field"><label>Time (years)</label><input type="number" id="cc_t" placeholder="5"></div>
+          <button class="calc-btn" onclick="calcCC()">Calculate</button>
+          <div class="result" id="res_cc">
+            <div class="result-label">Continuously Compounded Amount</div>
+            <div class="result-value" id="rv_cc"></div>
+            <div class="result-sub" id="rs_cc"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- LOANS -->
+    <div class="section" id="sec-loans">
+      <div class="cat-header">
+        <div class="cat-title">Loans &amp; Personal Finance</div>
+        <div class="cat-desc">EMI, amortization, payoff strategies, and borrowing costs.</div>
+      </div>
+      <div class="calc-grid">
+
+        <!-- EMI -->
+        <div class="calc-card">
+          <div class="calc-name">EMI Calculator <span class="calc-tag">LOAN</span></div>
+          <div class="field"><label>Loan Amount (₹)</label><input type="number" id="emi_p" placeholder="1000000"></div>
+          <div class="field"><label>Annual Interest Rate (%)</label><input type="number" id="emi_r" placeholder="9"></div>
+          <div class="field"><label>Loan Tenure (months)</label><input type="number" id="emi_n" placeholder="240"></div>
+          <button class="calc-btn" onclick="calcEMI()">Calculate</button>
+          <div class="result" id="res_emi">
+            <div class="result-label">Monthly EMI</div>
+            <div class="result-value" id="rv_emi"></div>
+            <div class="result-sub" id="rs_emi"></div>
+          </div>
+        </div>
+
+        <!-- Amortization -->
+        <div class="calc-card">
+          <div class="calc-name">Loan Amortisation Schedule <span class="calc-tag">LOAN</span></div>
+          <div class="field"><label>Loan Amount (₹)</label><input type="number" id="am_p" placeholder="500000"></div>
+          <div class="field"><label>Annual Interest Rate (%)</label><input type="number" id="am_r" placeholder="10"></div>
+          <div class="field"><label>Tenure (months)</label><input type="number" id="am_n" placeholder="60"></div>
+          <button class="calc-btn" onclick="calcAmort()">Generate Schedule</button>
+          <div class="result" id="res_am">
+            <div class="result-label">Monthly EMI</div>
+            <div class="result-value" id="rv_am"></div>
+            <div class="amort-scroll"><table class="amort-table">
+              <thead><tr><th>Month</th><th>Principal</th><th>Interest</th><th>Balance</th></tr></thead>
+              <tbody id="amort_body"></tbody>
+            </table></div>
+          </div>
+        </div>
+
+        <!-- EAR -->
+        <div class="calc-card">
+          <div class="calc-name">Effective Annual Rate (EAR) <span class="calc-tag">LOAN</span></div>
+          <div class="field"><label>Nominal Rate (% pa)</label><input type="number" id="ear_r" placeholder="12"></div>
+          <div class="field"><label>Compounding periods/year</label><input type="number" id="ear_n" placeholder="12"></div>
+          <button class="calc-btn" onclick="calcEAR()">Calculate</button>
+          <div class="result" id="res_ear">
+            <div class="result-label">Effective Annual Rate</div>
+            <div class="result-value" id="rv_ear"></div>
+          </div>
+        </div>
+
+        <!-- APR -->
+        <div class="calc-card">
+          <div class="calc-name">APR Calculator <span class="calc-tag">LOAN</span></div>
+          <div class="field"><label>Loan Amount (₹)</label><input type="number" id="apr_p" placeholder="1000000"></div>
+          <div class="field"><label>Monthly EMI (₹)</label><input type="number" id="apr_emi" placeholder="10500"></div>
+          <div class="field"><label>Fees &amp; Charges (₹)</label><input type="number" id="apr_fee" placeholder="5000"></div>
+          <div class="field"><label>Tenure (months)</label><input type="number" id="apr_n" placeholder="120"></div>
+          <button class="calc-btn" onclick="calcAPR()">Calculate</button>
+          <div class="result" id="res_apr">
+            <div class="result-label">Annual Percentage Rate (APR)</div>
+            <div class="result-value" id="rv_apr"></div>
+            <div class="result-sub" id="rs_apr"></div>
+          </div>
+        </div>
+
+        <!-- Mortgage -->
+        <div class="calc-card">
+          <div class="calc-name">Mortgage Calculator <span class="calc-tag">LOAN</span></div>
+          <div class="field"><label>Property Value (₹)</label><input type="number" id="mort_pv" placeholder="5000000"></div>
+          <div class="field"><label>Down Payment (%)</label><input type="number" id="mort_dp" placeholder="20"></div>
+          <div class="field"><label>Interest Rate (% pa)</label><input type="number" id="mort_r" placeholder="8.5"></div>
+          <div class="field"><label>Loan Term (years)</label><input type="number" id="mort_y" placeholder="20"></div>
+          <button class="calc-btn" onclick="calcMortgage()">Calculate</button>
+          <div class="result" id="res_mort">
+            <div class="result-label">Monthly Payment</div>
+            <div class="result-value" id="rv_mort"></div>
+            <div class="result-sub" id="rs_mort"></div>
+          </div>
+        </div>
+
+        <!-- Debt Payoff Planner -->
+        <div class="calc-card">
+          <div class="calc-name">Debt Payoff Planner <span class="calc-tag">LOAN</span></div>
+          <div class="field"><label>Total Debt (₹)</label><input type="number" id="dp_d" placeholder="300000"></div>
+          <div class="field"><label>Interest Rate (% pa)</label><input type="number" id="dp_r" placeholder="18"></div>
+          <div class="field"><label>Monthly Payment (₹)</label><input type="number" id="dp_pmt" placeholder="10000"></div>
+          <button class="calc-btn" onclick="calcDebtPayoff()">Calculate</button>
+          <div class="result" id="res_dp">
+            <div class="result-label">Payoff Timeline</div>
+            <div class="result-value" id="rv_dp"></div>
+            <div class="result-sub" id="rs_dp"></div>
+          </div>
+        </div>
+
+        <!-- Refinancing Break-even -->
+        <div class="calc-card">
+          <div class="calc-name">Refinancing Break-even <span class="calc-tag">LOAN</span></div>
+          <div class="field"><label>Current EMI (₹)</label><input type="number" id="refi_old" placeholder="12000"></div>
+          <div class="field"><label>New EMI (₹)</label><input type="number" id="refi_new" placeholder="11000"></div>
+          <div class="field"><label>Refinancing Costs (₹)</label><input type="number" id="refi_cost" placeholder="25000"></div>
+          <button class="calc-btn" onclick="calcRefi()">Calculate</button>
+          <div class="result" id="res_refi">
+            <div class="result-label">Break-even Period</div>
+            <div class="result-value" id="rv_refi"></div>
+            <div class="result-sub" id="rs_refi"></div>
+          </div>
+        </div>
+
+        <!-- Credit Card Payoff -->
+        <div class="calc-card">
+          <div class="calc-name">Credit Card Payoff <span class="calc-tag">LOAN</span></div>
+          <div class="field"><label>Balance (₹)</label><input type="number" id="cc2_bal" placeholder="50000"></div>
+          <div class="field"><label>Interest Rate (% pa)</label><input type="number" id="cc2_r" placeholder="36"></div>
+          <div class="field"><label>Monthly Payment (₹)</label><input type="number" id="cc2_pmt" placeholder="3000"></div>
+          <button class="calc-btn" onclick="calcCCPayoff()">Calculate</button>
+          <div class="result" id="res_cc2">
+            <div class="result-label">Payoff in</div>
+            <div class="result-value" id="rv_cc2"></div>
+            <div class="result-sub" id="rs_cc2"></div>
+          </div>
+        </div>
+
+        <!-- Rule of 72 -->
+        <div class="calc-card">
+          <div class="calc-name">Rule of 72 / 114 <span class="calc-tag">LOAN</span></div>
+          <div class="field"><label>Annual Rate of Return (%)</label><input type="number" id="r72_r" placeholder="12"></div>
+          <button class="calc-btn" onclick="calcRule72()">Calculate</button>
+          <div class="result" id="res_r72">
+            <div class="result-label">Doubling / Tripling Time</div>
+            <div class="result-value" id="rv_r72"></div>
+            <div class="result-sub" id="rs_r72"></div>
+          </div>
+        </div>
+
+        <!-- Balloon Payment -->
+        <div class="calc-card">
+          <div class="calc-name">Balloon Payment Loan <span class="calc-tag">LOAN</span></div>
+          <div class="field"><label>Loan Amount (₹)</label><input type="number" id="bal_p" placeholder="1000000"></div>
+          <div class="field"><label>Interest Rate (% pa)</label><input type="number" id="bal_r" placeholder="10"></div>
+          <div class="field"><label>Amortisation Period (months)</label><input type="number" id="bal_am" placeholder="240"></div>
+          <div class="field"><label>Balloon at month</label><input type="number" id="bal_bm" placeholder="60"></div>
+          <button class="calc-btn" onclick="calcBalloon()">Calculate</button>
+          <div class="result" id="res_bal">
+            <div class="result-label">Monthly EMI / Balloon Payment</div>
+            <div class="result-value" id="rv_bal"></div>
+            <div class="result-sub" id="rs_bal"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- SAVINGS -->
+    <div class="section" id="sec-savings">
+      <div class="cat-header">
+        <div class="cat-title">Savings &amp; Retirement</div>
+        <div class="cat-desc">SIP, retirement planning, FIRE, and goal-based savings.</div>
+      </div>
+      <div class="calc-grid">
+
+        <!-- SIP -->
+        <div class="calc-card">
+          <div class="calc-name">SIP Returns Calculator <span class="calc-tag">SAVINGS</span></div>
+          <div class="field"><label>Monthly SIP (₹)</label><input type="number" id="sip_m" placeholder="5000"></div>
+          <div class="field"><label>Expected Return (% pa)</label><input type="number" id="sip_r" placeholder="12"></div>
+          <div class="field"><label>Duration (years)</label><input type="number" id="sip_y" placeholder="15"></div>
+          <button class="calc-btn" onclick="calcSIP()">Calculate</button>
+          <div class="result" id="res_sip">
+            <div class="result-label">Corpus at Maturity</div>
+            <div class="result-value" id="rv_sip"></div>
+            <div class="result-sub" id="rs_sip"></div>
+          </div>
+        </div>
+
+        <!-- Lumpsum vs SIP -->
+        <div class="calc-card">
+          <div class="calc-name">Lumpsum vs SIP Comparison <span class="calc-tag">SAVINGS</span></div>
+          <div class="field"><label>Total Investment (₹)</label><input type="number" id="lsvs_total" placeholder="600000"></div>
+          <div class="field"><label>Expected Return (% pa)</label><input type="number" id="lsvs_r" placeholder="12"></div>
+          <div class="field"><label>Duration (years)</label><input type="number" id="lsvs_y" placeholder="10"></div>
+          <button class="calc-btn" onclick="calcLvsSIP()">Compare</button>
+          <div class="result" id="res_lsvs">
+            <div class="multi-result" id="rv_lsvs"></div>
+          </div>
+        </div>
+
+        <!-- Retirement Corpus -->
+        <div class="calc-card">
+          <div class="calc-name">Retirement Corpus Needed <span class="calc-tag">SAVINGS</span></div>
+          <div class="field"><label>Monthly Expenses Today (₹)</label><input type="number" id="ret_exp" placeholder="50000"></div>
+          <div class="field"><label>Years to Retirement</label><input type="number" id="ret_y" placeholder="25"></div>
+          <div class="field"><label>Inflation Rate (% pa)</label><input type="number" id="ret_inf" placeholder="6"></div>
+          <div class="field"><label>Expected Return in Retirement (%)</label><input type="number" id="ret_ret" placeholder="7"></div>
+          <div class="field"><label>Retirement Duration (years)</label><input type="number" id="ret_dur" placeholder="25"></div>
+          <button class="calc-btn" onclick="calcRetirement()">Calculate</button>
+          <div class="result" id="res_ret">
+            <div class="result-label">Corpus Required at Retirement</div>
+            <div class="result-value" id="rv_ret"></div>
+            <div class="result-sub" id="rs_ret"></div>
+          </div>
+        </div>
+
+        <!-- Inflation Adjusted Returns -->
+        <div class="calc-card">
+          <div class="calc-name">Inflation-adjusted Returns <span class="calc-tag">SAVINGS</span></div>
+          <div class="field"><label>Nominal Return (% pa)</label><input type="number" id="infl_nom" placeholder="12"></div>
+          <div class="field"><label>Inflation Rate (% pa)</label><input type="number" id="infl_inf" placeholder="6"></div>
+          <div class="field"><label>Investment (₹)</label><input type="number" id="infl_inv" placeholder="100000"></div>
+          <div class="field"><label>Years</label><input type="number" id="infl_y" placeholder="10"></div>
+          <button class="calc-btn" onclick="calcInflAdj()">Calculate</button>
+          <div class="result" id="res_infl">
+            <div class="result-label">Real Value After Inflation</div>
+            <div class="result-value" id="rv_infl"></div>
+            <div class="result-sub" id="rs_infl"></div>
+          </div>
+        </div>
+
+        <!-- FIRE -->
+        <div class="calc-card">
+          <div class="calc-name">FIRE Number Calculator <span class="calc-tag">SAVINGS</span></div>
+          <div class="field"><label>Annual Expenses (₹)</label><input type="number" id="fire_exp" placeholder="600000"></div>
+          <div class="field"><label>Safe Withdrawal Rate (%)</label><input type="number" id="fire_swr" placeholder="4"></div>
+          <button class="calc-btn" onclick="calcFIRE()">Calculate</button>
+          <div class="result" id="res_fire">
+            <div class="result-label">FIRE Number (Corpus Needed)</div>
+            <div class="result-value" id="rv_fire"></div>
+            <div class="result-sub" id="rs_fire"></div>
+          </div>
+        </div>
+
+        <!-- Goal-based Savings -->
+        <div class="calc-card">
+          <div class="calc-name">Goal-based Savings Planner <span class="calc-tag">SAVINGS</span></div>
+          <div class="field"><label>Goal Amount (₹)</label><input type="number" id="goal_amt" placeholder="2000000"></div>
+          <div class="field"><label>Years to Goal</label><input type="number" id="goal_y" placeholder="10"></div>
+          <div class="field"><label>Expected Return (% pa)</label><input type="number" id="goal_r" placeholder="12"></div>
+          <div class="field"><label>Existing Savings (₹)</label><input type="number" id="goal_exist" placeholder="0"></div>
+          <button class="calc-btn" onclick="calcGoal()">Calculate</button>
+          <div class="result" id="res_goal">
+            <div class="result-label">Required Monthly SIP</div>
+            <div class="result-value" id="rv_goal"></div>
+            <div class="result-sub" id="rs_goal"></div>
+          </div>
+        </div>
+
+        <!-- Withdrawal Rate Simulator -->
+        <div class="calc-card">
+          <div class="calc-name">Withdrawal Rate Simulator <span class="calc-tag">SAVINGS</span></div>
+          <div class="field"><label>Starting Corpus (₹)</label><input type="number" id="wrs_corp" placeholder="10000000"></div>
+          <div class="field"><label>Annual Withdrawal (₹)</label><input type="number" id="wrs_wdraw" placeholder="400000"></div>
+          <div class="field"><label>Portfolio Return (% pa)</label><input type="number" id="wrs_r" placeholder="8"></div>
+          <div class="field"><label>Inflation (% pa)</label><input type="number" id="wrs_inf" placeholder="5"></div>
+          <button class="calc-btn" onclick="calcWRS()">Simulate</button>
+          <div class="result" id="res_wrs">
+            <div class="result-label">Corpus Survives</div>
+            <div class="result-value" id="rv_wrs"></div>
+            <div class="result-sub" id="rs_wrs"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- EQUITY -->
+    <div class="section" id="sec-equity">
+      <div class="cat-header">
+        <div class="cat-title">Equity &amp; Stock Valuation</div>
+        <div class="cat-desc">Multiples, DDM, Graham Number, and earnings-based models.</div>
+      </div>
+      <div class="calc-grid">
+
+        <div class="calc-card">
+          <div class="calc-name">P/E Ratio <span class="calc-tag">EQUITY</span></div>
+          <div class="field"><label>Share Price (₹)</label><input type="number" id="pe_price" placeholder="500"></div>
+          <div class="field"><label>EPS (₹)</label><input type="number" id="pe_eps" placeholder="25"></div>
+          <button class="calc-btn" onclick="calcPE()">Calculate</button>
+          <div class="result" id="res_pe">
+            <div class="result-label">P/E Ratio</div>
+            <div class="result-value" id="rv_pe"></div>
+            <div class="result-sub" id="rs_pe"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">EPS (Basic &amp; Diluted) <span class="calc-tag">EQUITY</span></div>
+          <div class="field"><label>Net Profit (₹ Cr)</label><input type="number" id="eps_np" placeholder="500"></div>
+          <div class="field"><label>Basic Shares (Cr)</label><input type="number" id="eps_bs" placeholder="10"></div>
+          <div class="field"><label>Diluted Shares (Cr)</label><input type="number" id="eps_ds" placeholder="10.5"></div>
+          <button class="calc-btn" onclick="calcEPS()">Calculate</button>
+          <div class="result" id="res_eps">
+            <div class="multi-result" id="rv_eps"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">P/B Ratio <span class="calc-tag">EQUITY</span></div>
+          <div class="field"><label>Share Price (₹)</label><input type="number" id="pb_price" placeholder="500"></div>
+          <div class="field"><label>Book Value per Share (₹)</label><input type="number" id="pb_bvps" placeholder="200"></div>
+          <button class="calc-btn" onclick="calcPB()">Calculate</button>
+          <div class="result" id="res_pb">
+            <div class="result-label">P/B Ratio</div>
+            <div class="result-value" id="rv_pb"></div>
+            <div class="result-sub" id="rs_pb"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">EV/EBITDA <span class="calc-tag">EQUITY</span></div>
+          <div class="field"><label>Market Cap (₹ Cr)</label><input type="number" id="ev_mc" placeholder="5000"></div>
+          <div class="field"><label>Total Debt (₹ Cr)</label><input type="number" id="ev_d" placeholder="1000"></div>
+          <div class="field"><label>Cash &amp; Equivalents (₹ Cr)</label><input type="number" id="ev_c" placeholder="500"></div>
+          <div class="field"><label>EBITDA (₹ Cr)</label><input type="number" id="ev_ebitda" placeholder="800"></div>
+          <button class="calc-btn" onclick="calcEVEBITDA()">Calculate</button>
+          <div class="result" id="res_ev">
+            <div class="multi-result" id="rv_ev"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Dividend Yield &amp; DDM <span class="calc-tag">EQUITY</span></div>
+          <div class="field"><label>Annual Dividend (₹)</label><input type="number" id="ddm_div" placeholder="20"></div>
+          <div class="field"><label>Share Price (₹)</label><input type="number" id="ddm_price" placeholder="400"></div>
+          <div class="field"><label>Required Return (%)</label><input type="number" id="ddm_r" placeholder="12"></div>
+          <div class="field"><label>Dividend Growth Rate (%)</label><input type="number" id="ddm_g" placeholder="5"></div>
+          <button class="calc-btn" onclick="calcDDM()">Calculate</button>
+          <div class="result" id="res_ddm">
+            <div class="multi-result" id="rv_ddm"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">PEG Ratio <span class="calc-tag">EQUITY</span></div>
+          <div class="field"><label>P/E Ratio</label><input type="number" id="peg_pe" placeholder="25"></div>
+          <div class="field"><label>EPS Growth Rate (% pa)</label><input type="number" id="peg_g" placeholder="15"></div>
+          <button class="calc-btn" onclick="calcPEG()">Calculate</button>
+          <div class="result" id="res_peg">
+            <div class="result-label">PEG Ratio</div>
+            <div class="result-value" id="rv_peg"></div>
+            <div class="result-sub" id="rs_peg"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">P/S Ratio <span class="calc-tag">EQUITY</span></div>
+          <div class="field"><label>Market Cap (₹ Cr)</label><input type="number" id="ps_mc" placeholder="5000"></div>
+          <div class="field"><label>Annual Revenue (₹ Cr)</label><input type="number" id="ps_rev" placeholder="2000"></div>
+          <button class="calc-btn" onclick="calcPS()">Calculate</button>
+          <div class="result" id="res_ps">
+            <div class="result-label">Price-to-Sales Ratio</div>
+            <div class="result-value" id="rv_ps"></div>
+            <div class="result-sub" id="rs_ps"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Graham Number <span class="calc-tag">EQUITY</span></div>
+          <div class="field"><label>EPS (₹)</label><input type="number" id="gn_eps" placeholder="40"></div>
+          <div class="field"><label>Book Value per Share (₹)</label><input type="number" id="gn_bvps" placeholder="300"></div>
+          <button class="calc-btn" onclick="calcGraham()">Calculate</button>
+          <div class="result" id="res_gn">
+            <div class="result-label">Graham Number (Intrinsic Value)</div>
+            <div class="result-value" id="rv_gn"></div>
+            <div class="result-sub" id="rs_gn"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Earnings Yield <span class="calc-tag">EQUITY</span></div>
+          <div class="field"><label>EPS (₹)</label><input type="number" id="ey_eps" placeholder="30"></div>
+          <div class="field"><label>Share Price (₹)</label><input type="number" id="ey_price" placeholder="500"></div>
+          <button class="calc-btn" onclick="calcEY()">Calculate</button>
+          <div class="result" id="res_ey">
+            <div class="result-label">Earnings Yield</div>
+            <div class="result-value" id="rv_ey"></div>
+            <div class="result-sub" id="rs_ey"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Residual Income Model <span class="calc-tag">EQUITY</span></div>
+          <div class="field"><label>Book Value per Share (₹)</label><input type="number" id="rim_bvps" placeholder="200"></div>
+          <div class="field"><label>ROE (%)</label><input type="number" id="rim_roe" placeholder="18"></div>
+          <div class="field"><label>Cost of Equity (%)</label><input type="number" id="rim_ke" placeholder="12"></div>
+          <div class="field"><label>Growth Rate (%)</label><input type="number" id="rim_g" placeholder="5"></div>
+          <button class="calc-btn" onclick="calcRIM()">Calculate</button>
+          <div class="result" id="res_rim">
+            <div class="result-label">Intrinsic Value (RIM)</div>
+            <div class="result-value" id="rv_rim"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">H-Model Valuation <span class="calc-tag">EQUITY</span></div>
+          <div class="field"><label>Current Dividend (₹)</label><input type="number" id="hm_d" placeholder="10"></div>
+          <div class="field"><label>Short-term Growth (%)</label><input type="number" id="hm_ga" placeholder="20"></div>
+          <div class="field"><label>Long-term Growth (%)</label><input type="number" id="hm_gn" placeholder="6"></div>
+          <div class="field"><label>Half-life (years)</label><input type="number" id="hm_h" placeholder="5"></div>
+          <div class="field"><label>Required Return (%)</label><input type="number" id="hm_r" placeholder="12"></div>
+          <button class="calc-btn" onclick="calcHModel()">Calculate</button>
+          <div class="result" id="res_hm">
+            <div class="result-label">H-Model Intrinsic Value</div>
+            <div class="result-value" id="rv_hm"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">P/FCF Ratio <span class="calc-tag">EQUITY</span></div>
+          <div class="field"><label>Market Cap (₹ Cr)</label><input type="number" id="pfcf_mc" placeholder="5000"></div>
+          <div class="field"><label>Free Cash Flow (₹ Cr)</label><input type="number" id="pfcf_fcf" placeholder="400"></div>
+          <button class="calc-btn" onclick="calcPFCF()">Calculate</button>
+          <div class="result" id="res_pfcf">
+            <div class="result-label">P/FCF Ratio</div>
+            <div class="result-value" id="rv_pfcf"></div>
+            <div class="result-sub" id="rs_pfcf"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">EV/Revenue <span class="calc-tag">EQUITY</span></div>
+          <div class="field"><label>Market Cap (₹ Cr)</label><input type="number" id="evr_mc" placeholder="5000"></div>
+          <div class="field"><label>Total Debt (₹ Cr)</label><input type="number" id="evr_d" placeholder="1000"></div>
+          <div class="field"><label>Cash (₹ Cr)</label><input type="number" id="evr_c" placeholder="500"></div>
+          <div class="field"><label>Revenue (₹ Cr)</label><input type="number" id="evr_rev" placeholder="3000"></div>
+          <button class="calc-btn" onclick="calcEVRev()">Calculate</button>
+          <div class="result" id="res_evr">
+            <div class="result-label">EV/Revenue</div>
+            <div class="result-value" id="rv_evr"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Dividend Payout Ratio <span class="calc-tag">EQUITY</span></div>
+          <div class="field"><label>Dividend per Share (₹)</label><input type="number" id="dpr_dps" placeholder="15"></div>
+          <div class="field"><label>EPS (₹)</label><input type="number" id="dpr_eps" placeholder="50"></div>
+          <button class="calc-btn" onclick="calcDPR()">Calculate</button>
+          <div class="result" id="res_dpr">
+            <div class="result-label">Dividend Payout Ratio</div>
+            <div class="result-value" id="rv_dpr"></div>
+            <div class="result-sub" id="rs_dpr"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- CORP FINANCE -->
+    <div class="section" id="sec-corp">
+      <div class="cat-header">
+        <div class="cat-title">Corporate Finance &amp; Capital Budgeting</div>
+        <div class="cat-desc">DCF, WACC, NPV, IRR, leverage analysis, and project evaluation.</div>
+      </div>
+      <div class="calc-grid">
+
+        <div class="calc-card full">
+          <div class="calc-name">DCF Valuation <span class="calc-tag">CORP</span></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+            <div class="field"><label>FCF Year 1 (₹ Cr)</label><input type="number" id="dcf_cf1" placeholder="100"></div>
+            <div class="field"><label>FCF Year 2 (₹ Cr)</label><input type="number" id="dcf_cf2" placeholder="120"></div>
+            <div class="field"><label>FCF Year 3 (₹ Cr)</label><input type="number" id="dcf_cf3" placeholder="140"></div>
+            <div class="field"><label>FCF Year 4 (₹ Cr)</label><input type="number" id="dcf_cf4" placeholder="160"></div>
+            <div class="field"><label>FCF Year 5 (₹ Cr)</label><input type="number" id="dcf_cf5" placeholder="185"></div>
+            <div class="field"><label>Terminal Growth Rate (%)</label><input type="number" id="dcf_g" placeholder="5"></div>
+            <div class="field"><label>WACC / Discount Rate (%)</label><input type="number" id="dcf_wacc" placeholder="12"></div>
+            <div class="field"><label>Net Debt (₹ Cr)</label><input type="number" id="dcf_debt" placeholder="200"></div>
+            <div class="field"><label>Shares Outstanding (Cr)</label><input type="number" id="dcf_shares" placeholder="10"></div>
+          </div>
+          <button class="calc-btn" onclick="calcDCF()">Calculate DCF</button>
+          <div class="result" id="res_dcf">
+            <div class="multi-result" id="rv_dcf"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">WACC <span class="calc-tag">CORP</span></div>
+          <div class="field"><label>Equity Value (₹ Cr)</label><input type="number" id="wacc_e" placeholder="5000"></div>
+          <div class="field"><label>Debt Value (₹ Cr)</label><input type="number" id="wacc_d" placeholder="2000"></div>
+          <div class="field"><label>Cost of Equity (%)</label><input type="number" id="wacc_ke" placeholder="14"></div>
+          <div class="field"><label>Cost of Debt (%)</label><input type="number" id="wacc_kd" placeholder="8"></div>
+          <div class="field"><label>Tax Rate (%)</label><input type="number" id="wacc_tax" placeholder="25"></div>
+          <button class="calc-btn" onclick="calcWACC()">Calculate</button>
+          <div class="result" id="res_wacc">
+            <div class="result-label">WACC</div>
+            <div class="result-value" id="rv_wacc"></div>
+            <div class="result-sub" id="rs_wacc"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Terminal Value (Gordon Growth) <span class="calc-tag">CORP</span></div>
+          <div class="field"><label>Last Year FCF (₹ Cr)</label><input type="number" id="tv_fcf" placeholder="200"></div>
+          <div class="field"><label>Terminal Growth Rate (%)</label><input type="number" id="tv_g" placeholder="4"></div>
+          <div class="field"><label>WACC (%)</label><input type="number" id="tv_wacc" placeholder="11"></div>
+          <button class="calc-btn" onclick="calcTV()">Calculate</button>
+          <div class="result" id="res_tv">
+            <div class="result-label">Terminal Value</div>
+            <div class="result-value" id="rv_tv"></div>
+          </div>
+        </div>
+
+        <div class="calc-card full">
+          <div class="calc-name">NPV Calculator <span class="calc-tag">CORP</span></div>
+          <div class="field"><label>Initial Investment (₹)</label><input type="number" id="npv_inv" placeholder="500000"></div>
+          <div class="field"><label>Discount Rate (%)</label><input type="number" id="npv_r" placeholder="10"></div>
+          <div class="field"><label>Cash Flows (comma-separated, ₹)</label><input type="text" id="npv_cfs" placeholder="100000,150000,200000,200000,180000"></div>
+          <button class="calc-btn" onclick="calcNPV()">Calculate</button>
+          <div class="result" id="res_npv">
+            <div class="multi-result" id="rv_npv"></div>
+          </div>
+        </div>
+
+        <div class="calc-card full">
+          <div class="calc-name">IRR Calculator <span class="calc-tag">CORP</span></div>
+          <div class="field"><label>Initial Investment (₹)</label><input type="number" id="irr_inv" placeholder="500000"></div>
+          <div class="field"><label>Cash Flows (comma-separated, ₹)</label><input type="text" id="irr_cfs" placeholder="100000,150000,200000,200000,180000"></div>
+          <button class="calc-btn" onclick="calcIRR()">Calculate</button>
+          <div class="result" id="res_irr">
+            <div class="result-label">Internal Rate of Return</div>
+            <div class="result-value" id="rv_irr"></div>
+            <div class="result-sub" id="rs_irr"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Payback Period <span class="calc-tag">CORP</span></div>
+          <div class="field"><label>Initial Investment (₹)</label><input type="number" id="pbp_inv" placeholder="500000"></div>
+          <div class="field"><label>Annual Cash Inflows (₹)</label><input type="number" id="pbp_cf" placeholder="100000"></div>
+          <button class="calc-btn" onclick="calcPayback()">Calculate</button>
+          <div class="result" id="res_pbp">
+            <div class="result-label">Payback Period</div>
+            <div class="result-value" id="rv_pbp"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Break-even Analysis <span class="calc-tag">CORP</span></div>
+          <div class="field"><label>Fixed Costs (₹)</label><input type="number" id="be_fc" placeholder="500000"></div>
+          <div class="field"><label>Price per Unit (₹)</label><input type="number" id="be_p" placeholder="500"></div>
+          <div class="field"><label>Variable Cost per Unit (₹)</label><input type="number" id="be_vc" placeholder="300"></div>
+          <button class="calc-btn" onclick="calcBreakEven()">Calculate</button>
+          <div class="result" id="res_be">
+            <div class="multi-result" id="rv_be"></div>
+          </div>
+        </div>
+
+        <div class="calc-card full">
+          <div class="calc-name">MIRR (Modified IRR) <span class="calc-tag">CORP</span></div>
+          <div class="field"><label>Initial Investment (₹)</label><input type="number" id="mirr_inv" placeholder="500000"></div>
+          <div class="field"><label>Cash Flows (comma-separated, ₹)</label><input type="text" id="mirr_cfs" placeholder="100000,150000,200000,200000,180000"></div>
+          <div class="field"><label>Finance Rate (%)</label><input type="number" id="mirr_fr" placeholder="10"></div>
+          <div class="field"><label>Reinvestment Rate (%)</label><input type="number" id="mirr_rr" placeholder="8"></div>
+          <button class="calc-btn" onclick="calcMIRR()">Calculate</button>
+          <div class="result" id="res_mirr">
+            <div class="result-label">MIRR</div>
+            <div class="result-value" id="rv_mirr"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Profitability Index <span class="calc-tag">CORP</span></div>
+          <div class="field"><label>NPV (₹)</label><input type="number" id="pi_npv" placeholder="150000"></div>
+          <div class="field"><label>Initial Investment (₹)</label><input type="number" id="pi_inv" placeholder="500000"></div>
+          <button class="calc-btn" onclick="calcPI()">Calculate</button>
+          <div class="result" id="res_pi">
+            <div class="result-label">Profitability Index</div>
+            <div class="result-value" id="rv_pi"></div>
+            <div class="result-sub" id="rs_pi"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Operating Leverage (DOL) <span class="calc-tag">CORP</span></div>
+          <div class="field"><label>Contribution Margin (₹)</label><input type="number" id="dol_cm" placeholder="500000"></div>
+          <div class="field"><label>EBIT (₹)</label><input type="number" id="dol_ebit" placeholder="200000"></div>
+          <button class="calc-btn" onclick="calcDOL()">Calculate</button>
+          <div class="result" id="res_dol">
+            <div class="result-label">Degree of Operating Leverage</div>
+            <div class="result-value" id="rv_dol"></div>
+            <div class="result-sub" id="rs_dol"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Financial Leverage (DFL) <span class="calc-tag">CORP</span></div>
+          <div class="field"><label>EBIT (₹)</label><input type="number" id="dfl_ebit" placeholder="200000"></div>
+          <div class="field"><label>Interest Expense (₹)</label><input type="number" id="dfl_int" placeholder="50000"></div>
+          <button class="calc-btn" onclick="calcDFL()">Calculate</button>
+          <div class="result" id="res_dfl">
+            <div class="result-label">Degree of Financial Leverage</div>
+            <div class="result-value" id="rv_dfl"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Combined Leverage (DCL) <span class="calc-tag">CORP</span></div>
+          <div class="field"><label>Contribution Margin (₹)</label><input type="number" id="dcl_cm" placeholder="500000"></div>
+          <div class="field"><label>EBIT (₹)</label><input type="number" id="dcl_ebit" placeholder="200000"></div>
+          <div class="field"><label>Interest Expense (₹)</label><input type="number" id="dcl_int" placeholder="50000"></div>
+          <button class="calc-btn" onclick="calcDCL()">Calculate</button>
+          <div class="result" id="res_dcl">
+            <div class="result-label">Degree of Combined Leverage</div>
+            <div class="result-value" id="rv_dcl"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">APV (Adjusted Present Value) <span class="calc-tag">CORP</span></div>
+          <div class="field"><label>Base-case NPV (₹ Cr)</label><input type="number" id="apv_npv" placeholder="500"></div>
+          <div class="field"><label>PV of Tax Shield (₹ Cr)</label><input type="number" id="apv_ts" placeholder="80"></div>
+          <div class="field"><label>PV of Financing Side-effects (₹ Cr)</label><input type="number" id="apv_se" placeholder="0"></div>
+          <button class="calc-btn" onclick="calcAPV()">Calculate</button>
+          <div class="result" id="res_apv">
+            <div class="result-label">Adjusted Present Value</div>
+            <div class="result-value" id="rv_apv"></div>
+            <div class="result-sub" id="rs_apv"></div>
+          </div>
+        </div>
+
+        <div class="calc-card full">
+          <div class="calc-name">Scenario / Sensitivity Table <span class="calc-tag">CORP</span></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem">
+            <div class="field"><label>Base Revenue (₹ Cr)</label><input type="number" id="scen_rev" placeholder="1000"></div>
+            <div class="field"><label>Base Cost % of Revenue</label><input type="number" id="scen_cost" placeholder="65"></div>
+            <div class="field"><label>Tax Rate (%)</label><input type="number" id="scen_tax" placeholder="25"></div>
+          </div>
+          <button class="calc-btn" onclick="calcScenario()">Run Scenarios</button>
+          <div class="result" id="res_scen">
+            <div class="multi-result" id="rv_scen"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- FSA -->
+    <div class="section" id="sec-fsa">
+      <div class="cat-header">
+        <div class="cat-title">Financial Statement Analysis</div>
+        <div class="cat-desc">Profitability, liquidity, solvency, and quality ratios.</div>
+      </div>
+      <div class="calc-grid">
+
+        <div class="calc-card">
+          <div class="calc-name">ROCE <span class="calc-tag">FSA</span></div>
+          <div class="field"><label>EBIT (₹ Cr)</label><input type="number" id="roce_ebit" placeholder="200"></div>
+          <div class="field"><label>Total Assets (₹ Cr)</label><input type="number" id="roce_ta" placeholder="1000"></div>
+          <div class="field"><label>Current Liabilities (₹ Cr)</label><input type="number" id="roce_cl" placeholder="200"></div>
+          <button class="calc-btn" onclick="calcROCE()">Calculate</button>
+          <div class="result" id="res_roce">
+            <div class="result-label">ROCE</div>
+            <div class="result-value" id="rv_roce"></div>
+            <div class="result-sub" id="rs_roce"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">ROE / ROA / ROIC <span class="calc-tag">FSA</span></div>
+          <div class="field"><label>Net Profit (₹ Cr)</label><input type="number" id="roa_np" placeholder="150"></div>
+          <div class="field"><label>Shareholders' Equity (₹ Cr)</label><input type="number" id="roa_eq" placeholder="800"></div>
+          <div class="field"><label>Total Assets (₹ Cr)</label><input type="number" id="roa_ta" placeholder="1500"></div>
+          <div class="field"><label>Invested Capital (₹ Cr)</label><input type="number" id="roa_ic" placeholder="1000"></div>
+          <button class="calc-btn" onclick="calcROA()">Calculate</button>
+          <div class="result" id="res_roa">
+            <div class="multi-result" id="rv_roa"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Gross / EBITDA / Net Margin <span class="calc-tag">FSA</span></div>
+          <div class="field"><label>Revenue (₹ Cr)</label><input type="number" id="mgn_rev" placeholder="1000"></div>
+          <div class="field"><label>Gross Profit (₹ Cr)</label><input type="number" id="mgn_gp" placeholder="400"></div>
+          <div class="field"><label>EBITDA (₹ Cr)</label><input type="number" id="mgn_ebitda" placeholder="200"></div>
+          <div class="field"><label>Net Profit (₹ Cr)</label><input type="number" id="mgn_np" placeholder="120"></div>
+          <button class="calc-btn" onclick="calcMargins()">Calculate</button>
+          <div class="result" id="res_mgn">
+            <div class="multi-result" id="rv_mgn"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Current &amp; Quick Ratio <span class="calc-tag">FSA</span></div>
+          <div class="field"><label>Current Assets (₹ Cr)</label><input type="number" id="liq_ca" placeholder="500"></div>
+          <div class="field"><label>Inventory (₹ Cr)</label><input type="number" id="liq_inv" placeholder="100"></div>
+          <div class="field"><label>Current Liabilities (₹ Cr)</label><input type="number" id="liq_cl" placeholder="300"></div>
+          <button class="calc-btn" onclick="calcLiquidity()">Calculate</button>
+          <div class="result" id="res_liq">
+            <div class="multi-result" id="rv_liq"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Debt-to-Equity &amp; Interest Coverage <span class="calc-tag">FSA</span></div>
+          <div class="field"><label>Total Debt (₹ Cr)</label><input type="number" id="de_d" placeholder="500"></div>
+          <div class="field"><label>Shareholders' Equity (₹ Cr)</label><input type="number" id="de_e" placeholder="800"></div>
+          <div class="field"><label>EBIT (₹ Cr)</label><input type="number" id="de_ebit" placeholder="200"></div>
+          <div class="field"><label>Interest Expense (₹ Cr)</label><input type="number" id="de_int" placeholder="40"></div>
+          <button class="calc-btn" onclick="calcDE()">Calculate</button>
+          <div class="result" id="res_de">
+            <div class="multi-result" id="rv_de"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">DuPont Analysis (3-factor) <span class="calc-tag">FSA</span></div>
+          <div class="field"><label>Net Profit Margin (%)</label><input type="number" id="du3_npm" placeholder="12"></div>
+          <div class="field"><label>Asset Turnover (x)</label><input type="number" id="du3_at" placeholder="1.2"></div>
+          <div class="field"><label>Equity Multiplier (x)</label><input type="number" id="du3_em" placeholder="2.0"></div>
+          <button class="calc-btn" onclick="calcDuPont3()">Calculate</button>
+          <div class="result" id="res_du3">
+            <div class="result-label">ROE (3-Factor DuPont)</div>
+            <div class="result-value" id="rv_du3"></div>
+            <div class="result-sub" id="rs_du3"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">DuPont Analysis (5-factor) <span class="calc-tag">FSA</span></div>
+          <div class="field"><label>Tax Burden (NI/EBT)</label><input type="number" id="du5_tb" placeholder="0.75"></div>
+          <div class="field"><label>Interest Burden (EBT/EBIT)</label><input type="number" id="du5_ib" placeholder="0.85"></div>
+          <div class="field"><label>EBIT Margin (%)</label><input type="number" id="du5_ebit" placeholder="18"></div>
+          <div class="field"><label>Asset Turnover (x)</label><input type="number" id="du5_at" placeholder="1.2"></div>
+          <div class="field"><label>Equity Multiplier (x)</label><input type="number" id="du5_em" placeholder="2.0"></div>
+          <button class="calc-btn" onclick="calcDuPont5()">Calculate</button>
+          <div class="result" id="res_du5">
+            <div class="result-label">ROE (5-Factor DuPont)</div>
+            <div class="result-value" id="rv_du5"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Turnover &amp; Working Capital Ratios <span class="calc-tag">FSA</span></div>
+          <div class="field"><label>Revenue (₹ Cr)</label><input type="number" id="turn_rev" placeholder="1000"></div>
+          <div class="field"><label>Total Assets (₹ Cr)</label><input type="number" id="turn_ta" placeholder="800"></div>
+          <div class="field"><label>Inventory (₹ Cr)</label><input type="number" id="turn_inv" placeholder="100"></div>
+          <div class="field"><label>Receivables (₹ Cr)</label><input type="number" id="turn_rec" placeholder="120"></div>
+          <div class="field"><label>Payables (₹ Cr)</label><input type="number" id="turn_pay" placeholder="80"></div>
+          <div class="field"><label>COGS (₹ Cr)</label><input type="number" id="turn_cogs" placeholder="600"></div>
+          <button class="calc-btn" onclick="calcTurnover()">Calculate</button>
+          <div class="result" id="res_turn">
+            <div class="multi-result" id="rv_turn"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Altman Z-Score <span class="calc-tag">FSA</span></div>
+          <div class="field"><label>Working Capital (₹ Cr)</label><input type="number" id="alt_wc" placeholder="200"></div>
+          <div class="field"><label>Total Assets (₹ Cr)</label><input type="number" id="alt_ta" placeholder="1000"></div>
+          <div class="field"><label>Retained Earnings (₹ Cr)</label><input type="number" id="alt_re" placeholder="300"></div>
+          <div class="field"><label>EBIT (₹ Cr)</label><input type="number" id="alt_ebit" placeholder="150"></div>
+          <div class="field"><label>Market Cap (₹ Cr)</label><input type="number" id="alt_mc" placeholder="1500"></div>
+          <div class="field"><label>Total Liabilities (₹ Cr)</label><input type="number" id="alt_tl" placeholder="600"></div>
+          <div class="field"><label>Revenue (₹ Cr)</label><input type="number" id="alt_rev" placeholder="800"></div>
+          <button class="calc-btn" onclick="calcAltman()">Calculate</button>
+          <div class="result" id="res_alt">
+            <div class="result-label">Altman Z-Score</div>
+            <div class="result-value" id="rv_alt"></div>
+            <div class="result-sub" id="rs_alt"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Piotroski F-Score <span class="calc-tag">FSA</span></div>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:0.75rem">Answer Yes(1)/No(0) for each criterion:</p>
+          <div style="font-size:12px;display:grid;gap:4px">
+            <label style="color:var(--text);display:flex;gap:0.5rem;align-items:center"><input type="checkbox" id="pio_1"> Positive ROA</label>
+            <label style="color:var(--text);display:flex;gap:0.5rem;align-items:center"><input type="checkbox" id="pio_2"> Positive Operating Cash Flow</label>
+            <label style="color:var(--text);display:flex;gap:0.5rem;align-items:center"><input type="checkbox" id="pio_3"> Increasing ROA YoY</label>
+            <label style="color:var(--text);display:flex;gap:0.5rem;align-items:center"><input type="checkbox" id="pio_4"> CFO &gt; Net Income (Accruals)</label>
+            <label style="color:var(--text);display:flex;gap:0.5rem;align-items:center"><input type="checkbox" id="pio_5"> Decreasing Long-term Debt ratio</label>
+            <label style="color:var(--text);display:flex;gap:0.5rem;align-items:center"><input type="checkbox" id="pio_6"> Improving Current Ratio</label>
+            <label style="color:var(--text);display:flex;gap:0.5rem;align-items:center"><input type="checkbox" id="pio_7"> No New Share Issuance</label>
+            <label style="color:var(--text);display:flex;gap:0.5rem;align-items:center"><input type="checkbox" id="pio_8"> Improving Gross Margin</label>
+            <label style="color:var(--text);display:flex;gap:0.5rem;align-items:center"><input type="checkbox" id="pio_9"> Improving Asset Turnover</label>
+          </div>
+          <button class="calc-btn" onclick="calcPiotroski()">Calculate F-Score</button>
+          <div class="result" id="res_pio">
+            <div class="result-label">Piotroski F-Score</div>
+            <div class="result-value" id="rv_pio"></div>
+            <div class="result-sub" id="rs_pio"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Beneish M-Score <span class="calc-tag">FSA</span></div>
+          <div class="field"><label>DSRI (Days Sales Receivable Index)</label><input type="number" id="ben_dsri" placeholder="1.031" step="0.001"></div>
+          <div class="field"><label>GMI (Gross Margin Index)</label><input type="number" id="ben_gmi" placeholder="1.014" step="0.001"></div>
+          <div class="field"><label>AQI (Asset Quality Index)</label><input type="number" id="ben_aqi" placeholder="1.040" step="0.001"></div>
+          <div class="field"><label>SGI (Sales Growth Index)</label><input type="number" id="ben_sgi" placeholder="1.134" step="0.001"></div>
+          <div class="field"><label>DEPI (Depreciation Index)</label><input type="number" id="ben_depi" placeholder="1.000" step="0.001"></div>
+          <div class="field"><label>SGAI (SGA Expense Index)</label><input type="number" id="ben_sgai" placeholder="0.990" step="0.001"></div>
+          <div class="field"><label>LVGI (Leverage Index)</label><input type="number" id="ben_lvgi" placeholder="1.111" step="0.001"></div>
+          <div class="field"><label>TATA (Total Accruals to Total Assets)</label><input type="number" id="ben_tata" placeholder="0.035" step="0.001"></div>
+          <button class="calc-btn" onclick="calcBeneish()">Calculate M-Score</button>
+          <div class="result" id="res_ben">
+            <div class="result-label">Beneish M-Score</div>
+            <div class="result-value" id="rv_ben"></div>
+            <div class="result-sub" id="rs_ben"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Operating Cash Flow Ratios <span class="calc-tag">FSA</span></div>
+          <div class="field"><label>Operating Cash Flow (₹ Cr)</label><input type="number" id="ocf_cf" placeholder="200"></div>
+          <div class="field"><label>Net Income (₹ Cr)</label><input type="number" id="ocf_ni" placeholder="150"></div>
+          <div class="field"><label>Current Liabilities (₹ Cr)</label><input type="number" id="ocf_cl" placeholder="300"></div>
+          <div class="field"><label>Capital Expenditure (₹ Cr)</label><input type="number" id="ocf_capex" placeholder="80"></div>
+          <button class="calc-btn" onclick="calcOCF()">Calculate</button>
+          <div class="result" id="res_ocf">
+            <div class="multi-result" id="rv_ocf"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Cash Conversion Cycle <span class="calc-tag">FSA</span></div>
+          <div class="field"><label>DIO — Days Inventory Outstanding</label><input type="number" id="ccc_dio" placeholder="45"></div>
+          <div class="field"><label>DSO — Days Sales Outstanding</label><input type="number" id="ccc_dso" placeholder="30"></div>
+          <div class="field"><label>DPO — Days Payable Outstanding</label><input type="number" id="ccc_dpo" placeholder="25"></div>
+          <button class="calc-btn" onclick="calcCCC()">Calculate</button>
+          <div class="result" id="res_ccc">
+            <div class="result-label">Cash Conversion Cycle</div>
+            <div class="result-value" id="rv_ccc"></div>
+            <div class="result-sub" id="rs_ccc"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- PORTFOLIO -->
+    <div class="section" id="sec-portfolio">
+      <div class="cat-header">
+        <div class="cat-title">Portfolio &amp; Investment Analysis</div>
+        <div class="cat-desc">Risk-adjusted performance, factor models, and position sizing.</div>
+      </div>
+      <div class="calc-grid">
+
+        <div class="calc-card">
+          <div class="calc-name">Sharpe Ratio <span class="calc-tag">PORTF</span></div>
+          <div class="field"><label>Portfolio Return (% pa)</label><input type="number" id="sh_rp" placeholder="18"></div>
+          <div class="field"><label>Risk-free Rate (% pa)</label><input type="number" id="sh_rf" placeholder="6.5"></div>
+          <div class="field"><label>Portfolio Std Dev (% pa)</label><input type="number" id="sh_sd" placeholder="14"></div>
+          <button class="calc-btn" onclick="calcSharpe()">Calculate</button>
+          <div class="result" id="res_sh">
+            <div class="result-label">Sharpe Ratio</div>
+            <div class="result-value" id="rv_sh"></div>
+            <div class="result-sub" id="rs_sh"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">CAGR <span class="calc-tag">PORTF</span></div>
+          <div class="field"><label>Beginning Value (₹)</label><input type="number" id="cagr_bv" placeholder="100000"></div>
+          <div class="field"><label>Ending Value (₹)</label><input type="number" id="cagr_ev" placeholder="250000"></div>
+          <div class="field"><label>Number of Years</label><input type="number" id="cagr_n" placeholder="8"></div>
+          <button class="calc-btn" onclick="calcCAGR()">Calculate</button>
+          <div class="result" id="res_cagr">
+            <div class="result-label">CAGR</div>
+            <div class="result-value" id="rv_cagr"></div>
+            <div class="result-sub" id="rs_cagr"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">CAPM Expected Return <span class="calc-tag">PORTF</span></div>
+          <div class="field"><label>Risk-free Rate (%)</label><input type="number" id="capm_rf" placeholder="6.5"></div>
+          <div class="field"><label>Beta (β)</label><input type="number" id="capm_b" placeholder="1.2" step="0.01"></div>
+          <div class="field"><label>Market Return (% pa)</label><input type="number" id="capm_rm" placeholder="14"></div>
+          <button class="calc-btn" onclick="calcCAPM()">Calculate</button>
+          <div class="result" id="res_capm">
+            <div class="result-label">Expected Return (CAPM)</div>
+            <div class="result-value" id="rv_capm"></div>
+            <div class="result-sub" id="rs_capm"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Beta Calculation <span class="calc-tag">PORTF</span></div>
+          <div class="field"><label>Covariance (Stock, Market)</label><input type="number" id="beta_cov" placeholder="0.025" step="0.001"></div>
+          <div class="field"><label>Market Variance</label><input type="number" id="beta_var" placeholder="0.02" step="0.001"></div>
+          <button class="calc-btn" onclick="calcBeta()">Calculate</button>
+          <div class="result" id="res_beta">
+            <div class="result-label">Beta (β)</div>
+            <div class="result-value" id="rv_beta"></div>
+            <div class="result-sub" id="rs_beta"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Portfolio Variance &amp; Std Dev (2 Assets) <span class="calc-tag">PORTF</span></div>
+          <div class="field"><label>Weight Asset A (0–1)</label><input type="number" id="pv_wa" placeholder="0.6" step="0.01"></div>
+          <div class="field"><label>Weight Asset B (0–1)</label><input type="number" id="pv_wb" placeholder="0.4" step="0.01"></div>
+          <div class="field"><label>Std Dev A (%)</label><input type="number" id="pv_sda" placeholder="18"></div>
+          <div class="field"><label>Std Dev B (%)</label><input type="number" id="pv_sdb" placeholder="12"></div>
+          <div class="field"><label>Correlation (A, B)</label><input type="number" id="pv_corr" placeholder="0.3" step="0.01"></div>
+          <button class="calc-btn" onclick="calcPortVar()">Calculate</button>
+          <div class="result" id="res_pv">
+            <div class="multi-result" id="rv_pv"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Sortino Ratio <span class="calc-tag">PORTF</span></div>
+          <div class="field"><label>Portfolio Return (% pa)</label><input type="number" id="sort_rp" placeholder="18"></div>
+          <div class="field"><label>Risk-free Rate (% pa)</label><input type="number" id="sort_rf" placeholder="6.5"></div>
+          <div class="field"><label>Downside Std Dev (% pa)</label><input type="number" id="sort_dsd" placeholder="8"></div>
+          <button class="calc-btn" onclick="calcSortino()">Calculate</button>
+          <div class="result" id="res_sort">
+            <div class="result-label">Sortino Ratio</div>
+            <div class="result-value" id="rv_sort"></div>
+            <div class="result-sub" id="rs_sort"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Treynor Ratio <span class="calc-tag">PORTF</span></div>
+          <div class="field"><label>Portfolio Return (% pa)</label><input type="number" id="trey_rp" placeholder="18"></div>
+          <div class="field"><label>Risk-free Rate (% pa)</label><input type="number" id="trey_rf" placeholder="6.5"></div>
+          <div class="field"><label>Portfolio Beta</label><input type="number" id="trey_b" placeholder="1.1" step="0.01"></div>
+          <button class="calc-btn" onclick="calcTreynor()">Calculate</button>
+          <div class="result" id="res_trey">
+            <div class="result-label">Treynor Ratio</div>
+            <div class="result-value" id="rv_trey"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Jensen's Alpha <span class="calc-tag">PORTF</span></div>
+          <div class="field"><label>Portfolio Return (% pa)</label><input type="number" id="alpha_rp" placeholder="18"></div>
+          <div class="field"><label>Risk-free Rate (% pa)</label><input type="number" id="alpha_rf" placeholder="6.5"></div>
+          <div class="field"><label>Portfolio Beta</label><input type="number" id="alpha_b" placeholder="1.1" step="0.01"></div>
+          <div class="field"><label>Market Return (% pa)</label><input type="number" id="alpha_rm" placeholder="14"></div>
+          <button class="calc-btn" onclick="calcAlpha()">Calculate</button>
+          <div class="result" id="res_alpha">
+            <div class="result-label">Jensen's Alpha</div>
+            <div class="result-value" id="rv_alpha"></div>
+            <div class="result-sub" id="rs_alpha"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Maximum Drawdown <span class="calc-tag">PORTF</span></div>
+          <div class="field"><label>Peak Portfolio Value (₹)</label><input type="number" id="mdd_peak" placeholder="1500000"></div>
+          <div class="field"><label>Trough Portfolio Value (₹)</label><input type="number" id="mdd_trough" placeholder="900000"></div>
+          <button class="calc-btn" onclick="calcMDD()">Calculate</button>
+          <div class="result" id="res_mdd">
+            <div class="result-label">Maximum Drawdown</div>
+            <div class="result-value" id="rv_mdd"></div>
+            <div class="result-sub" id="rs_mdd"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">VaR (Parametric, 95%) <span class="calc-tag">PORTF</span></div>
+          <div class="field"><label>Portfolio Value (₹)</label><input type="number" id="var_pv" placeholder="1000000"></div>
+          <div class="field"><label>Daily Std Dev (%)</label><input type="number" id="var_sd" placeholder="1.5" step="0.1"></div>
+          <div class="field"><label>Confidence Level</label>
+            <select id="var_conf"><option value="1.645">95%</option><option value="2.326">99%</option></select>
+          </div>
+          <button class="calc-btn" onclick="calcVaR()">Calculate</button>
+          <div class="result" id="res_var">
+            <div class="result-label">1-Day Value at Risk</div>
+            <div class="result-value" id="rv_var"></div>
+            <div class="result-sub" id="rs_var"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">CVaR / Expected Shortfall <span class="calc-tag">PORTF</span></div>
+          <div class="field"><label>VaR Amount (₹)</label><input type="number" id="cvar_var" placeholder="24675"></div>
+          <div class="field"><label>Confidence Level</label>
+            <select id="cvar_conf"><option value="1.2533">95%</option><option value="1.3942">99%</option></select>
+          </div>
+          <button class="calc-btn" onclick="calcCVaR()">Calculate</button>
+          <div class="result" id="res_cvar">
+            <div class="result-label">Expected Shortfall (CVaR)</div>
+            <div class="result-value" id="rv_cvar"></div>
+            <div class="result-sub" id="rs_cvar"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Information Ratio <span class="calc-tag">PORTF</span></div>
+          <div class="field"><label>Portfolio Return (% pa)</label><input type="number" id="ir_rp" placeholder="18"></div>
+          <div class="field"><label>Benchmark Return (% pa)</label><input type="number" id="ir_rb" placeholder="15"></div>
+          <div class="field"><label>Tracking Error (% pa)</label><input type="number" id="ir_te" placeholder="4"></div>
+          <button class="calc-btn" onclick="calcIR()">Calculate</button>
+          <div class="result" id="res_ir">
+            <div class="result-label">Information Ratio</div>
+            <div class="result-value" id="rv_ir"></div>
+            <div class="result-sub" id="rs_ir"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Calmar Ratio <span class="calc-tag">PORTF</span></div>
+          <div class="field"><label>CAGR (% pa)</label><input type="number" id="calm_cagr" placeholder="22"></div>
+          <div class="field"><label>Maximum Drawdown (%)</label><input type="number" id="calm_mdd" placeholder="35"></div>
+          <button class="calc-btn" onclick="calcCalmar()">Calculate</button>
+          <div class="result" id="res_calm">
+            <div class="result-label">Calmar Ratio</div>
+            <div class="result-value" id="rv_calm"></div>
+            <div class="result-sub" id="rs_calm"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Kelly Criterion <span class="calc-tag">PORTF</span></div>
+          <div class="field"><label>Win Probability (0–1)</label><input type="number" id="kelly_wp" placeholder="0.55" step="0.01"></div>
+          <div class="field"><label>Win/Loss Ratio (B)</label><input type="number" id="kelly_b" placeholder="1.5" step="0.01"></div>
+          <button class="calc-btn" onclick="calcKelly()">Calculate</button>
+          <div class="result" id="res_kelly">
+            <div class="result-label">Kelly Fraction (% of Capital)</div>
+            <div class="result-value" id="rv_kelly"></div>
+            <div class="result-sub" id="rs_kelly"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- BONDS -->
+    <div class="section" id="sec-bonds">
+      <div class="cat-header">
+        <div class="cat-title">Fixed Income &amp; Bonds</div>
+        <div class="cat-desc">Bond pricing, yield, duration, convexity, and spread analysis.</div>
+      </div>
+      <div class="calc-grid">
+
+        <div class="calc-card">
+          <div class="calc-name">Bond Price <span class="calc-tag">BOND</span></div>
+          <div class="field"><label>Face Value (₹)</label><input type="number" id="bp_fv" placeholder="1000"></div>
+          <div class="field"><label>Coupon Rate (% pa)</label><input type="number" id="bp_c" placeholder="8"></div>
+          <div class="field"><label>YTM (% pa)</label><input type="number" id="bp_ytm" placeholder="7"></div>
+          <div class="field"><label>Periods to Maturity</label><input type="number" id="bp_n" placeholder="10"></div>
+          <div class="field"><label>Frequency</label>
+            <select id="bp_freq"><option value="1">Annual</option><option value="2">Semi-annual</option></select>
+          </div>
+          <button class="calc-btn" onclick="calcBondPrice()">Calculate</button>
+          <div class="result" id="res_bp">
+            <div class="result-label">Bond Price</div>
+            <div class="result-value" id="rv_bp"></div>
+            <div class="result-sub" id="rs_bp"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Yield to Maturity (YTM) <span class="calc-tag">BOND</span></div>
+          <div class="field"><label>Face Value (₹)</label><input type="number" id="ytm_fv" placeholder="1000"></div>
+          <div class="field"><label>Current Price (₹)</label><input type="number" id="ytm_price" placeholder="950"></div>
+          <div class="field"><label>Coupon Rate (% pa)</label><input type="number" id="ytm_c" placeholder="8"></div>
+          <div class="field"><label>Years to Maturity</label><input type="number" id="ytm_n" placeholder="10"></div>
+          <button class="calc-btn" onclick="calcYTM()">Calculate (approx)</button>
+          <div class="result" id="res_ytm">
+            <div class="result-label">Yield to Maturity (approx)</div>
+            <div class="result-value" id="rv_ytm"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Current Yield <span class="calc-tag">BOND</span></div>
+          <div class="field"><label>Annual Coupon (₹)</label><input type="number" id="cy_c" placeholder="80"></div>
+          <div class="field"><label>Current Price (₹)</label><input type="number" id="cy_price" placeholder="950"></div>
+          <button class="calc-btn" onclick="calcCY()">Calculate</button>
+          <div class="result" id="res_cy">
+            <div class="result-label">Current Yield</div>
+            <div class="result-value" id="rv_cy"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Duration (Macaulay) <span class="calc-tag">BOND</span></div>
+          <div class="field"><label>Face Value (₹)</label><input type="number" id="dur_fv" placeholder="1000"></div>
+          <div class="field"><label>Coupon Rate (% pa)</label><input type="number" id="dur_c" placeholder="8"></div>
+          <div class="field"><label>YTM (% pa)</label><input type="number" id="dur_ytm" placeholder="7"></div>
+          <div class="field"><label>Years to Maturity</label><input type="number" id="dur_n" placeholder="5"></div>
+          <button class="calc-btn" onclick="calcDuration()">Calculate</button>
+          <div class="result" id="res_dur">
+            <div class="multi-result" id="rv_dur"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Bond Convexity <span class="calc-tag">BOND</span></div>
+          <div class="field"><label>Face Value (₹)</label><input type="number" id="conv_fv" placeholder="1000"></div>
+          <div class="field"><label>Coupon Rate (% pa)</label><input type="number" id="conv_c" placeholder="8"></div>
+          <div class="field"><label>YTM (% pa)</label><input type="number" id="conv_ytm" placeholder="7"></div>
+          <div class="field"><label>Years to Maturity</label><input type="number" id="conv_n" placeholder="5"></div>
+          <button class="calc-btn" onclick="calcConvexity()">Calculate</button>
+          <div class="result" id="res_conv">
+            <div class="result-label">Convexity</div>
+            <div class="result-value" id="rv_conv"></div>
+            <div class="result-sub" id="rs_conv"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Yield to Call (YTC) <span class="calc-tag">BOND</span></div>
+          <div class="field"><label>Call Price (₹)</label><input type="number" id="ytc_cp" placeholder="1050"></div>
+          <div class="field"><label>Current Price (₹)</label><input type="number" id="ytc_price" placeholder="960"></div>
+          <div class="field"><label>Annual Coupon (₹)</label><input type="number" id="ytc_c" placeholder="80"></div>
+          <div class="field"><label>Years to Call</label><input type="number" id="ytc_n" placeholder="3"></div>
+          <button class="calc-btn" onclick="calcYTC()">Calculate (approx)</button>
+          <div class="result" id="res_ytc">
+            <div class="result-label">Yield to Call (approx)</div>
+            <div class="result-value" id="rv_ytc"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Forward Rate <span class="calc-tag">BOND</span></div>
+          <div class="field"><label>Spot Rate Year 1 (% pa)</label><input type="number" id="fr_s1" placeholder="6"></div>
+          <div class="field"><label>Spot Rate Year 2 (% pa)</label><input type="number" id="fr_s2" placeholder="7"></div>
+          <button class="calc-btn" onclick="calcForwardRate()">Calculate</button>
+          <div class="result" id="res_fr">
+            <div class="result-label">Implied 1yr Forward Rate (Year 2)</div>
+            <div class="result-value" id="rv_fr"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Bond Spread Analysis <span class="calc-tag">BOND</span></div>
+          <div class="field"><label>Corporate Bond YTM (%)</label><input type="number" id="bsp_c" placeholder="9.5"></div>
+          <div class="field"><label>Government Bond YTM (%)</label><input type="number" id="bsp_g" placeholder="7.0"></div>
+          <button class="calc-btn" onclick="calcSpread()">Calculate</button>
+          <div class="result" id="res_bsp">
+            <div class="result-label">Credit Spread</div>
+            <div class="result-value" id="rv_bsp"></div>
+            <div class="result-sub" id="rs_bsp"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Spot Rate Bootstrapping <span class="calc-tag">BOND</span></div>
+          <div class="field"><label>1-Year Par Rate (%)</label><input type="number" id="boot_r1" placeholder="6"></div>
+          <div class="field"><label>2-Year Par Rate (%)</label><input type="number" id="boot_r2" placeholder="6.5"></div>
+          <button class="calc-btn" onclick="calcBootstrap()">Bootstrap 2yr Spot</button>
+          <div class="result" id="res_boot">
+            <div class="result-label">2-Year Spot Rate</div>
+            <div class="result-value" id="rv_boot"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- DERIVATIVES -->
+    <div class="section" id="sec-deriv">
+      <div class="cat-header">
+        <div class="cat-title">Derivatives &amp; Options</div>
+        <div class="cat-desc">Black-Scholes, Greeks, binomial pricing, and break-even analysis.</div>
+      </div>
+      <div class="calc-grid">
+
+        <div class="calc-card full">
+          <div class="calc-name">Black-Scholes Option Pricing <span class="calc-tag">DERIV</span></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem">
+            <div class="field"><label>Spot Price (₹)</label><input type="number" id="bs_s" placeholder="500"></div>
+            <div class="field"><label>Strike Price (₹)</label><input type="number" id="bs_k" placeholder="520"></div>
+            <div class="field"><label>Time to Expiry (years)</label><input type="number" id="bs_t" placeholder="0.25" step="0.01"></div>
+            <div class="field"><label>Risk-free Rate (%)</label><input type="number" id="bs_r" placeholder="6.5"></div>
+            <div class="field"><label>Volatility / σ (%)</label><input type="number" id="bs_v" placeholder="25"></div>
+          </div>
+          <button class="calc-btn" onclick="calcBS()">Calculate All Greeks</button>
+          <div class="result" id="res_bs">
+            <div class="multi-result" id="rv_bs"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Put-Call Parity <span class="calc-tag">DERIV</span></div>
+          <div class="field"><label>Call Price (₹)</label><input type="number" id="pcp_c" placeholder="20"></div>
+          <div class="field"><label>Strike Price (₹)</label><input type="number" id="pcp_k" placeholder="520"></div>
+          <div class="field"><label>Risk-free Rate (%)</label><input type="number" id="pcp_r" placeholder="6.5"></div>
+          <div class="field"><label>Time to Expiry (years)</label><input type="number" id="pcp_t" placeholder="0.25" step="0.01"></div>
+          <div class="field"><label>Spot Price (₹)</label><input type="number" id="pcp_s" placeholder="500"></div>
+          <button class="calc-btn" onclick="calcPCP()">Calculate Put Price</button>
+          <div class="result" id="res_pcp">
+            <div class="result-label">Implied Put Price (₹)</div>
+            <div class="result-value" id="rv_pcp"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Implied Volatility (approx) <span class="calc-tag">DERIV</span></div>
+          <div class="field"><label>Market Option Price (₹)</label><input type="number" id="iv_mp" placeholder="22"></div>
+          <div class="field"><label>Spot Price (₹)</label><input type="number" id="iv_s" placeholder="500"></div>
+          <div class="field"><label>Strike Price (₹)</label><input type="number" id="iv_k" placeholder="520"></div>
+          <div class="field"><label>Time to Expiry (years)</label><input type="number" id="iv_t" placeholder="0.25" step="0.01"></div>
+          <div class="field"><label>Risk-free Rate (%)</label><input type="number" id="iv_r" placeholder="6.5"></div>
+          <button class="calc-btn" onclick="calcIV()">Solve IV</button>
+          <div class="result" id="res_iv">
+            <div class="result-label">Implied Volatility</div>
+            <div class="result-value" id="rv_iv"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Binomial Option Pricing (1 period) <span class="calc-tag">DERIV</span></div>
+          <div class="field"><label>Spot Price (₹)</label><input type="number" id="bin_s" placeholder="500"></div>
+          <div class="field"><label>Strike Price (₹)</label><input type="number" id="bin_k" placeholder="520"></div>
+          <div class="field"><label>Up Factor (u)</label><input type="number" id="bin_u" placeholder="1.15" step="0.01"></div>
+          <div class="field"><label>Down Factor (d)</label><input type="number" id="bin_d" placeholder="0.90" step="0.01"></div>
+          <div class="field"><label>Risk-free Rate (%)</label><input type="number" id="bin_r" placeholder="6.5"></div>
+          <div class="field"><label>Time (years)</label><input type="number" id="bin_t" placeholder="0.25" step="0.01"></div>
+          <button class="calc-btn" onclick="calcBinomial()">Calculate</button>
+          <div class="result" id="res_bin">
+            <div class="multi-result" id="rv_bin"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Options Break-even Premium <span class="calc-tag">DERIV</span></div>
+          <div class="field"><label>Strike Price (₹)</label><input type="number" id="bep_k" placeholder="520"></div>
+          <div class="field"><label>Premium Paid (₹)</label><input type="number" id="bep_p" placeholder="18"></div>
+          <div class="field"><label>Option Type</label>
+            <select id="bep_type"><option value="call">Call</option><option value="put">Put</option></select>
+          </div>
+          <button class="calc-btn" onclick="calcBEP()">Calculate</button>
+          <div class="result" id="res_bep">
+            <div class="result-label">Break-even Price</div>
+            <div class="result-value" id="rv_bep"></div>
+            <div class="result-sub" id="rs_bep"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- FOREX -->
+    <div class="section" id="sec-forex">
+      <div class="cat-header">
+        <div class="cat-title">Forex &amp; Macro</div>
+        <div class="cat-desc">Currency, PPP, interest rate parity, and real return metrics.</div>
+      </div>
+      <div class="calc-grid">
+
+        <div class="calc-card">
+          <div class="calc-name">Currency Conversion <span class="calc-tag">FOREX</span></div>
+          <div class="field"><label>Amount</label><input type="number" id="fx_amt" placeholder="10000"></div>
+          <div class="field"><label>Exchange Rate (Base/Quote)</label><input type="number" id="fx_rate" placeholder="83.5" step="0.01"></div>
+          <div class="field"><label>Direction</label>
+            <select id="fx_dir"><option value="to">Base → Quote (e.g. USD→INR)</option><option value="from">Quote → Base (e.g. INR→USD)</option></select>
+          </div>
+          <button class="calc-btn" onclick="calcFX()">Convert</button>
+          <div class="result" id="res_fx">
+            <div class="result-label">Converted Amount</div>
+            <div class="result-value" id="rv_fx"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">PPP Exchange Rate <span class="calc-tag">FOREX</span></div>
+          <div class="field"><label>Current Spot Rate (domestic/foreign)</label><input type="number" id="ppp_spot" placeholder="83.5" step="0.01"></div>
+          <div class="field"><label>Domestic Inflation (% pa)</label><input type="number" id="ppp_inf_d" placeholder="6"></div>
+          <div class="field"><label>Foreign Inflation (% pa)</label><input type="number" id="ppp_inf_f" placeholder="3"></div>
+          <div class="field"><label>Horizon (years)</label><input type="number" id="ppp_y" placeholder="1"></div>
+          <button class="calc-btn" onclick="calcPPP()">Calculate</button>
+          <div class="result" id="res_ppp">
+            <div class="result-label">Expected Exchange Rate (PPP)</div>
+            <div class="result-value" id="rv_ppp"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Interest Rate Parity (Covered) <span class="calc-tag">FOREX</span></div>
+          <div class="field"><label>Spot Rate (domestic/foreign)</label><input type="number" id="irp_spot" placeholder="83.5"></div>
+          <div class="field"><label>Domestic Rate (% pa)</label><input type="number" id="irp_rd" placeholder="6.5"></div>
+          <div class="field"><label>Foreign Rate (% pa)</label><input type="number" id="irp_rf" placeholder="5.0"></div>
+          <div class="field"><label>Time (years)</label><input type="number" id="irp_t" placeholder="1"></div>
+          <button class="calc-btn" onclick="calcIRP()">Calculate</button>
+          <div class="result" id="res_irp">
+            <div class="result-label">No-arbitrage Forward Rate</div>
+            <div class="result-value" id="rv_irp"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Forward Exchange Rate <span class="calc-tag">FOREX</span></div>
+          <div class="field"><label>Spot Rate</label><input type="number" id="fwdx_s" placeholder="83.5"></div>
+          <div class="field"><label>Domestic Rate (% pa)</label><input type="number" id="fwdx_rd" placeholder="7"></div>
+          <div class="field"><label>Foreign Rate (% pa)</label><input type="number" id="fwdx_rf" placeholder="4"></div>
+          <div class="field"><label>Days</label><input type="number" id="fwdx_days" placeholder="180"></div>
+          <button class="calc-btn" onclick="calcFwdX()">Calculate</button>
+          <div class="result" id="res_fwdx">
+            <div class="result-label">Forward Rate</div>
+            <div class="result-value" id="rv_fwdx"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Real vs Nominal Exchange Rate <span class="calc-tag">FOREX</span></div>
+          <div class="field"><label>Nominal Exchange Rate (d/f)</label><input type="number" id="rer_n" placeholder="83.5"></div>
+          <div class="field"><label>Foreign Price Level (index)</label><input type="number" id="rer_pf" placeholder="100"></div>
+          <div class="field"><label>Domestic Price Level (index)</label><input type="number" id="rer_pd" placeholder="110"></div>
+          <button class="calc-btn" onclick="calcRER()">Calculate</button>
+          <div class="result" id="res_rer">
+            <div class="result-label">Real Exchange Rate</div>
+            <div class="result-value" id="rv_rer"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Real Interest Rate (Fisher Equation) <span class="calc-tag">FOREX</span></div>
+          <div class="field"><label>Nominal Rate (% pa)</label><input type="number" id="fish_n" placeholder="8"></div>
+          <div class="field"><label>Inflation Rate (% pa)</label><input type="number" id="fish_inf" placeholder="5"></div>
+          <button class="calc-btn" onclick="calcFisher()">Calculate</button>
+          <div class="result" id="res_fish">
+            <div class="multi-result" id="rv_fish"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Big Mac Index (PPP) <span class="calc-tag">FOREX</span></div>
+          <div class="field"><label>Big Mac Price Domestic (₹)</label><input type="number" id="bmi_d" placeholder="300"></div>
+          <div class="field"><label>Big Mac Price Foreign ($)</label><input type="number" id="bmi_f" placeholder="5.5"></div>
+          <div class="field"><label>Actual Exchange Rate (d/f)</label><input type="number" id="bmi_fx" placeholder="83.5"></div>
+          <button class="calc-btn" onclick="calcBMI()">Calculate</button>
+          <div class="result" id="res_bmi">
+            <div class="multi-result" id="rv_bmi"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- REAL ESTATE -->
+    <div class="section" id="sec-realestate">
+      <div class="cat-header">
+        <div class="cat-title">Real Estate &amp; Infrastructure</div>
+        <div class="cat-desc">Cap rate, yield, NOI, DSCR, and property investment metrics.</div>
+      </div>
+      <div class="calc-grid">
+
+        <div class="calc-card">
+          <div class="calc-name">Cap Rate <span class="calc-tag">RE</span></div>
+          <div class="field"><label>Net Operating Income (₹)</label><input type="number" id="cap_noi" placeholder="600000"></div>
+          <div class="field"><label>Property Value (₹)</label><input type="number" id="cap_pv" placeholder="8000000"></div>
+          <button class="calc-btn" onclick="calcCapRate()">Calculate</button>
+          <div class="result" id="res_cap">
+            <div class="result-label">Capitalization Rate</div>
+            <div class="result-value" id="rv_cap"></div>
+            <div class="result-sub" id="rs_cap"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Rental Yield <span class="calc-tag">RE</span></div>
+          <div class="field"><label>Annual Rent (₹)</label><input type="number" id="ry_rent" placeholder="360000"></div>
+          <div class="field"><label>Property Value (₹)</label><input type="number" id="ry_pv" placeholder="6000000"></div>
+          <div class="field"><label>Annual Expenses (₹)</label><input type="number" id="ry_exp" placeholder="40000"></div>
+          <button class="calc-btn" onclick="calcRY()">Calculate</button>
+          <div class="result" id="res_ry">
+            <div class="multi-result" id="rv_ry"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">NOI (Net Operating Income) <span class="calc-tag">RE</span></div>
+          <div class="field"><label>Gross Rental Income (₹)</label><input type="number" id="noi_gr" placeholder="600000"></div>
+          <div class="field"><label>Vacancy Loss (₹)</label><input type="number" id="noi_vac" placeholder="30000"></div>
+          <div class="field"><label>Operating Expenses (₹)</label><input type="number" id="noi_exp" placeholder="80000"></div>
+          <button class="calc-btn" onclick="calcNOI()">Calculate</button>
+          <div class="result" id="res_noi">
+            <div class="result-label">Net Operating Income</div>
+            <div class="result-value" id="rv_noi"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Price-to-Rent Ratio <span class="calc-tag">RE</span></div>
+          <div class="field"><label>Property Price (₹)</label><input type="number" id="ptr_p" placeholder="6000000"></div>
+          <div class="field"><label>Annual Rent (₹)</label><input type="number" id="ptr_r" placeholder="300000"></div>
+          <button class="calc-btn" onclick="calcPTR()">Calculate</button>
+          <div class="result" id="res_ptr">
+            <div class="result-label">Price-to-Rent Ratio</div>
+            <div class="result-value" id="rv_ptr"></div>
+            <div class="result-sub" id="rs_ptr"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Cash-on-Cash Return <span class="calc-tag">RE</span></div>
+          <div class="field"><label>Annual Pre-tax Cash Flow (₹)</label><input type="number" id="coc_cf" placeholder="200000"></div>
+          <div class="field"><label>Total Cash Invested (₹)</label><input type="number" id="coc_inv" placeholder="2000000"></div>
+          <button class="calc-btn" onclick="calcCoC()">Calculate</button>
+          <div class="result" id="res_coc">
+            <div class="result-label">Cash-on-Cash Return</div>
+            <div class="result-value" id="rv_coc"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Gross Rent Multiplier <span class="calc-tag">RE</span></div>
+          <div class="field"><label>Property Price (₹)</label><input type="number" id="grm_p" placeholder="6000000"></div>
+          <div class="field"><label>Annual Gross Rent (₹)</label><input type="number" id="grm_r" placeholder="400000"></div>
+          <button class="calc-btn" onclick="calcGRM()">Calculate</button>
+          <div class="result" id="res_grm">
+            <div class="result-label">Gross Rent Multiplier</div>
+            <div class="result-value" id="rv_grm"></div>
+            <div class="result-sub" id="rs_grm"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">LTV Ratio <span class="calc-tag">RE</span></div>
+          <div class="field"><label>Loan Amount (₹)</label><input type="number" id="ltv_loan" placeholder="4000000"></div>
+          <div class="field"><label>Property Value (₹)</label><input type="number" id="ltv_pv" placeholder="6000000"></div>
+          <button class="calc-btn" onclick="calcLTV()">Calculate</button>
+          <div class="result" id="res_ltv">
+            <div class="result-label">Loan-to-Value Ratio</div>
+            <div class="result-value" id="rv_ltv"></div>
+            <div class="result-sub" id="rs_ltv"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">DSCR (Debt Service Coverage) <span class="calc-tag">RE</span></div>
+          <div class="field"><label>Net Operating Income (₹ pa)</label><input type="number" id="dscr_noi" placeholder="600000"></div>
+          <div class="field"><label>Annual Debt Service (₹)</label><input type="number" id="dscr_ds" placeholder="400000"></div>
+          <button class="calc-btn" onclick="calcDSCR()">Calculate</button>
+          <div class="result" id="res_dscr">
+            <div class="result-label">DSCR</div>
+            <div class="result-value" id="rv_dscr"></div>
+            <div class="result-sub" id="rs_dscr"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- STARTUP -->
+    <div class="section" id="sec-startup">
+      <div class="cat-header">
+        <div class="cat-title">Startup &amp; VC / PE</div>
+        <div class="cat-desc">Valuation, dilution, returns, and runway metrics.</div>
+      </div>
+      <div class="calc-grid">
+
+        <div class="calc-card">
+          <div class="calc-name">Pre &amp; Post Money Valuation <span class="calc-tag">VC</span></div>
+          <div class="field"><label>Pre-money Valuation (₹ Cr)</label><input type="number" id="pmv_pre" placeholder="50"></div>
+          <div class="field"><label>Investment Raised (₹ Cr)</label><input type="number" id="pmv_inv" placeholder="10"></div>
+          <button class="calc-btn" onclick="calcPMV()">Calculate</button>
+          <div class="result" id="res_pmv">
+            <div class="multi-result" id="rv_pmv"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Dilution Calculator <span class="calc-tag">VC</span></div>
+          <div class="field"><label>Shares Before Round</label><input type="number" id="dil_sb" placeholder="1000000"></div>
+          <div class="field"><label>New Shares Issued</label><input type="number" id="dil_new" placeholder="200000"></div>
+          <div class="field"><label>Your Current Shares</label><input type="number" id="dil_own" placeholder="400000"></div>
+          <button class="calc-btn" onclick="calcDilution()">Calculate</button>
+          <div class="result" id="res_dil">
+            <div class="multi-result" id="rv_dil"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">MOIC <span class="calc-tag">VC</span></div>
+          <div class="field"><label>Exit Proceeds (₹ Cr)</label><input type="number" id="moic_e" placeholder="500"></div>
+          <div class="field"><label>Total Investment (₹ Cr)</label><input type="number" id="moic_inv" placeholder="50"></div>
+          <div class="field"><label>Holding Period (years)</label><input type="number" id="moic_y" placeholder="5"></div>
+          <button class="calc-btn" onclick="calcMOIC()">Calculate</button>
+          <div class="result" id="res_moic">
+            <div class="multi-result" id="rv_moic"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">LTV / CAC Ratio <span class="calc-tag">VC</span></div>
+          <div class="field"><label>Customer Lifetime Value (₹)</label><input type="number" id="ltvcac_ltv" placeholder="50000"></div>
+          <div class="field"><label>Customer Acquisition Cost (₹)</label><input type="number" id="ltvcac_cac" placeholder="8000"></div>
+          <button class="calc-btn" onclick="calcLTVCAC()">Calculate</button>
+          <div class="result" id="res_ltvcac">
+            <div class="result-label">LTV/CAC Ratio</div>
+            <div class="result-value" id="rv_ltvcac"></div>
+            <div class="result-sub" id="rs_ltvcac"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Burn Rate &amp; Runway <span class="calc-tag">VC</span></div>
+          <div class="field"><label>Cash in Bank (₹ Cr)</label><input type="number" id="burn_cash" placeholder="10"></div>
+          <div class="field"><label>Monthly Revenue (₹ Cr)</label><input type="number" id="burn_rev" placeholder="0.5"></div>
+          <div class="field"><label>Monthly Expenses (₹ Cr)</label><input type="number" id="burn_exp" placeholder="1.5"></div>
+          <button class="calc-btn" onclick="calcBurn()">Calculate</button>
+          <div class="result" id="res_burn">
+            <div class="multi-result" id="rv_burn"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">VC Method Valuation <span class="calc-tag">VC</span></div>
+          <div class="field"><label>Expected Exit Revenue (₹ Cr)</label><input type="number" id="vc_rev" placeholder="200"></div>
+          <div class="field"><label>Exit Revenue Multiple (x)</label><input type="number" id="vc_mult" placeholder="5"></div>
+          <div class="field"><label>Target Return (% pa)</label><input type="number" id="vc_r" placeholder="40"></div>
+          <div class="field"><label>Investment Horizon (years)</label><input type="number" id="vc_y" placeholder="5"></div>
+          <div class="field"><label>Investment Amount (₹ Cr)</label><input type="number" id="vc_inv" placeholder="10"></div>
+          <button class="calc-btn" onclick="calcVCMethod()">Calculate</button>
+          <div class="result" id="res_vc">
+            <div class="multi-result" id="rv_vc"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Option Pool Shuffle <span class="calc-tag">VC</span></div>
+          <div class="field"><label>Pre-money Valuation (₹ Cr)</label><input type="number" id="ops_pre" placeholder="50"></div>
+          <div class="field"><label>Investment (₹ Cr)</label><input type="number" id="ops_inv" placeholder="10"></div>
+          <div class="field"><label>Option Pool (% post-money)</label><input type="number" id="ops_pool" placeholder="15"></div>
+          <button class="calc-btn" onclick="calcOPS()">Calculate</button>
+          <div class="result" id="res_ops">
+            <div class="multi-result" id="rv_ops"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Waterfall Distribution <span class="calc-tag">VC</span></div>
+          <div class="field"><label>Exit Value (₹ Cr)</label><input type="number" id="wf_exit" placeholder="100"></div>
+          <div class="field"><label>Preferred Stock Investment (₹ Cr)</label><input type="number" id="wf_pref" placeholder="20"></div>
+          <div class="field"><label>Liquidation Preference Multiple (x)</label><input type="number" id="wf_lm" placeholder="1"></div>
+          <div class="field"><label>VC Ownership (%)</label><input type="number" id="wf_vc_pct" placeholder="30"></div>
+          <button class="calc-btn" onclick="calcWaterfall()">Calculate</button>
+          <div class="result" id="res_wf">
+            <div class="multi-result" id="rv_wf"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAX -->
+    <div class="section" id="sec-tax">
+      <div class="cat-header">
+        <div class="cat-title">Tax &amp; Returns</div>
+        <div class="cat-desc">Indian tax calculations: LTCG, STCG, indexed cost, and after-tax returns.</div>
+      </div>
+      <div class="calc-grid">
+
+        <div class="calc-card">
+          <div class="calc-name">After-tax Return <span class="calc-tag">TAX</span></div>
+          <div class="field"><label>Pre-tax Return (%)</label><input type="number" id="atr_pre" placeholder="15"></div>
+          <div class="field"><label>Tax Rate (%)</label><input type="number" id="atr_tax" placeholder="30"></div>
+          <button class="calc-btn" onclick="calcATR()">Calculate</button>
+          <div class="result" id="res_atr">
+            <div class="result-label">After-tax Return</div>
+            <div class="result-value" id="rv_atr"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">LTCG / STCG Tax (India) <span class="calc-tag">TAX</span></div>
+          <div class="field"><label>Sale Value (₹)</label><input type="number" id="cg_sv" placeholder="500000"></div>
+          <div class="field"><label>Purchase Cost (₹)</label><input type="number" id="cg_pv" placeholder="300000"></div>
+          <div class="field"><label>Holding Period</label>
+            <select id="cg_type"><option value="ltcg">Long Term (&gt;12 months, Equity)</option><option value="stcg">Short Term (≤12 months, Equity)</option><option value="ltcg_other">Long Term (&gt;24 months, Others)</option></select>
+          </div>
+          <button class="calc-btn" onclick="calcCG()">Calculate</button>
+          <div class="result" id="res_cg">
+            <div class="multi-result" id="rv_cg"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Tax-equivalent Yield <span class="calc-tag">TAX</span></div>
+          <div class="field"><label>Tax-exempt Yield (%)</label><input type="number" id="tey_y" placeholder="6.5"></div>
+          <div class="field"><label>Tax Rate (%)</label><input type="number" id="tey_tax" placeholder="30"></div>
+          <button class="calc-btn" onclick="calcTEY()">Calculate</button>
+          <div class="result" id="res_tey">
+            <div class="result-label">Tax-equivalent Yield</div>
+            <div class="result-value" id="rv_tey"></div>
+            <div class="result-sub" id="rs_tey"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Effective Tax Rate <span class="calc-tag">TAX</span></div>
+          <div class="field"><label>Total Tax Paid (₹)</label><input type="number" id="etr_tax" placeholder="150000"></div>
+          <div class="field"><label>Total Income (₹)</label><input type="number" id="etr_inc" placeholder="800000"></div>
+          <button class="calc-btn" onclick="calcETR()">Calculate</button>
+          <div class="result" id="res_etr">
+            <div class="result-label">Effective Tax Rate</div>
+            <div class="result-value" id="rv_etr"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">Indexed Cost of Acquisition (India) <span class="calc-tag">TAX</span></div>
+          <div class="field"><label>Original Purchase Cost (₹)</label><input type="number" id="ica_cost" placeholder="500000"></div>
+          <div class="field"><label>CII (Year of Purchase)</label><input type="number" id="ica_cii_p" placeholder="254"></div>
+          <div class="field"><label>CII (Year of Sale)</label><input type="number" id="ica_cii_s" placeholder="363"></div>
+          <button class="calc-btn" onclick="calcICA()">Calculate</button>
+          <div class="result" id="res_ica">
+            <div class="result-label">Indexed Cost of Acquisition</div>
+            <div class="result-value" id="rv_ica"></div>
+            <div class="result-sub" id="rs_ica"></div>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-name">TDS Gross-up Calculator <span class="calc-tag">TAX</span></div>
+          <div class="field"><label>Net Amount Received (₹)</label><input type="number" id="tds_net" placeholder="70000"></div>
+          <div class="field"><label>TDS Rate (%)</label><input type="number" id="tds_rate" placeholder="10"></div>
+          <button class="calc-btn" onclick="calcTDS()">Calculate</button>
+          <div class="result" id="res_tds">
+            <div class="multi-result" id="rv_tds"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ============================
+// NAVIGATION
+// ============================
+function showCat(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.sidebar-category').forEach(b => b.classList.remove('active'));
+  const sec = document.getElementById('sec-' + id);
+  if (sec) sec.classList.add('active');
+  event.target.classList.add('active');
+  document.getElementById('searchPane').classList.remove('show');
+  document.getElementById('globalSearch').value = '';
+}
+
+// ============================
+// SEARCH
+// ============================
+const CALC_INDEX = [
+  {name:'Present Value (PV)',cat:'TVM',sec:'tvm'},{name:'Future Value (FV)',cat:'TVM',sec:'tvm'},{name:'Simple Interest',cat:'TVM',sec:'tvm'},{name:'Compound Interest',cat:'TVM',sec:'tvm'},{name:'Annuity PV',cat:'TVM',sec:'tvm'},{name:'Annuity FV',cat:'TVM',sec:'tvm'},{name:'Perpetuity Value',cat:'TVM',sec:'tvm'},{name:'Growing Annuity PV',cat:'TVM',sec:'tvm'},{name:'Continuous Compounding',cat:'TVM',sec:'tvm'},
+  {name:'EMI Calculator',cat:'Loans',sec:'loans'},{name:'Loan Amortisation Schedule',cat:'Loans',sec:'loans'},{name:'Effective Annual Rate (EAR)',cat:'Loans',sec:'loans'},{name:'APR Calculator',cat:'Loans',sec:'loans'},{name:'Mortgage Calculator',cat:'Loans',sec:'loans'},{name:'Debt Payoff Planner',cat:'Loans',sec:'loans'},{name:'Refinancing Break-even',cat:'Loans',sec:'loans'},{name:'Credit Card Payoff',cat:'Loans',sec:'loans'},{name:'Rule of 72 / 114',cat:'Loans',sec:'loans'},{name:'Balloon Payment Loan',cat:'Loans',sec:'loans'},
+  {name:'SIP Returns Calculator',cat:'Savings',sec:'savings'},{name:'Lumpsum vs SIP',cat:'Savings',sec:'savings'},{name:'Retirement Corpus',cat:'Savings',sec:'savings'},{name:'Inflation-adjusted Returns',cat:'Savings',sec:'savings'},{name:'FIRE Number Calculator',cat:'Savings',sec:'savings'},{name:'Goal-based Savings Planner',cat:'Savings',sec:'savings'},{name:'Withdrawal Rate Simulator',cat:'Savings',sec:'savings'},
+  {name:'P/E Ratio',cat:'Equity',sec:'equity'},{name:'EPS Calculator',cat:'Equity',sec:'equity'},{name:'P/B Ratio',cat:'Equity',sec:'equity'},{name:'EV/EBITDA',cat:'Equity',sec:'equity'},{name:'Dividend Yield & DDM',cat:'Equity',sec:'equity'},{name:'PEG Ratio',cat:'Equity',sec:'equity'},{name:'P/S Ratio',cat:'Equity',sec:'equity'},{name:'Graham Number',cat:'Equity',sec:'equity'},{name:'Earnings Yield',cat:'Equity',sec:'equity'},{name:'Residual Income Model',cat:'Equity',sec:'equity'},{name:'H-Model Valuation',cat:'Equity',sec:'equity'},{name:'P/FCF Ratio',cat:'Equity',sec:'equity'},{name:'EV/Revenue',cat:'Equity',sec:'equity'},{name:'Dividend Payout Ratio',cat:'Equity',sec:'equity'},
+  {name:'DCF Valuation',cat:'Corporate',sec:'corp'},{name:'WACC',cat:'Corporate',sec:'corp'},{name:'Terminal Value',cat:'Corporate',sec:'corp'},{name:'NPV Calculator',cat:'Corporate',sec:'corp'},{name:'IRR Calculator',cat:'Corporate',sec:'corp'},{name:'Payback Period',cat:'Corporate',sec:'corp'},{name:'Break-even Analysis',cat:'Corporate',sec:'corp'},{name:'MIRR',cat:'Corporate',sec:'corp'},{name:'Profitability Index',cat:'Corporate',sec:'corp'},{name:'Operating Leverage (DOL)',cat:'Corporate',sec:'corp'},{name:'Financial Leverage (DFL)',cat:'Corporate',sec:'corp'},{name:'Combined Leverage (DCL)',cat:'Corporate',sec:'corp'},{name:'APV',cat:'Corporate',sec:'corp'},{name:'Scenario Sensitivity Table',cat:'Corporate',sec:'corp'},
+  {name:'ROCE',cat:'FSA',sec:'fsa'},{name:'ROE / ROA / ROIC',cat:'FSA',sec:'fsa'},{name:'Gross / EBITDA / Net Margin',cat:'FSA',sec:'fsa'},{name:'Current & Quick Ratio',cat:'FSA',sec:'fsa'},{name:'Debt-to-Equity',cat:'FSA',sec:'fsa'},{name:'DuPont 3-Factor',cat:'FSA',sec:'fsa'},{name:'DuPont 5-Factor',cat:'FSA',sec:'fsa'},{name:'Turnover & Working Capital Ratios',cat:'FSA',sec:'fsa'},{name:'Altman Z-Score',cat:'FSA',sec:'fsa'},{name:'Piotroski F-Score',cat:'FSA',sec:'fsa'},{name:'Beneish M-Score',cat:'FSA',sec:'fsa'},{name:'Operating Cash Flow Ratios',cat:'FSA',sec:'fsa'},{name:'Cash Conversion Cycle',cat:'FSA',sec:'fsa'},
+  {name:'Sharpe Ratio',cat:'Portfolio',sec:'portfolio'},{name:'CAGR',cat:'Portfolio',sec:'portfolio'},{name:'CAPM Expected Return',cat:'Portfolio',sec:'portfolio'},{name:'Beta Calculation',cat:'Portfolio',sec:'portfolio'},{name:'Portfolio Variance & Std Dev',cat:'Portfolio',sec:'portfolio'},{name:'Sortino Ratio',cat:'Portfolio',sec:'portfolio'},{name:'Treynor Ratio',cat:'Portfolio',sec:'portfolio'},{name:"Jensen's Alpha",cat:'Portfolio',sec:'portfolio'},{name:'Maximum Drawdown',cat:'Portfolio',sec:'portfolio'},{name:'VaR Parametric',cat:'Portfolio',sec:'portfolio'},{name:'CVaR / Expected Shortfall',cat:'Portfolio',sec:'portfolio'},{name:'Information Ratio',cat:'Portfolio',sec:'portfolio'},{name:'Calmar Ratio',cat:'Portfolio',sec:'portfolio'},{name:'Kelly Criterion',cat:'Portfolio',sec:'portfolio'},
+  {name:'Bond Price',cat:'Bonds',sec:'bonds'},{name:'YTM',cat:'Bonds',sec:'bonds'},{name:'Current Yield',cat:'Bonds',sec:'bonds'},{name:'Macaulay Duration',cat:'Bonds',sec:'bonds'},{name:'Bond Convexity',cat:'Bonds',sec:'bonds'},{name:'Yield to Call (YTC)',cat:'Bonds',sec:'bonds'},{name:'Forward Rate',cat:'Bonds',sec:'bonds'},{name:'Bond Spread Analysis',cat:'Bonds',sec:'bonds'},{name:'Spot Rate Bootstrapping',cat:'Bonds',sec:'bonds'},
+  {name:'Black-Scholes Option Pricing',cat:'Derivatives',sec:'deriv'},{name:'Put-Call Parity',cat:'Derivatives',sec:'deriv'},{name:'Implied Volatility',cat:'Derivatives',sec:'deriv'},{name:'Binomial Option Pricing',cat:'Derivatives',sec:'deriv'},{name:'Options Break-even Premium',cat:'Derivatives',sec:'deriv'},
+  {name:'Currency Conversion',cat:'Forex',sec:'forex'},{name:'PPP Exchange Rate',cat:'Forex',sec:'forex'},{name:'Interest Rate Parity',cat:'Forex',sec:'forex'},{name:'Forward Exchange Rate',cat:'Forex',sec:'forex'},{name:'Real vs Nominal Exchange Rate',cat:'Forex',sec:'forex'},{name:'Real Interest Rate (Fisher)',cat:'Forex',sec:'forex'},{name:'Big Mac Index',cat:'Forex',sec:'forex'},
+  {name:'Cap Rate',cat:'Real Estate',sec:'realestate'},{name:'Rental Yield',cat:'Real Estate',sec:'realestate'},{name:'NOI',cat:'Real Estate',sec:'realestate'},{name:'Price-to-Rent Ratio',cat:'Real Estate',sec:'realestate'},{name:'Cash-on-Cash Return',cat:'Real Estate',sec:'realestate'},{name:'Gross Rent Multiplier',cat:'Real Estate',sec:'realestate'},{name:'LTV Ratio',cat:'Real Estate',sec:'realestate'},{name:'DSCR',cat:'Real Estate',sec:'realestate'},
+  {name:'Pre & Post Money Valuation',cat:'Startup',sec:'startup'},{name:'Dilution Calculator',cat:'Startup',sec:'startup'},{name:'MOIC',cat:'Startup',sec:'startup'},{name:'LTV/CAC Ratio',cat:'Startup',sec:'startup'},{name:'Burn Rate & Runway',cat:'Startup',sec:'startup'},{name:'VC Method Valuation',cat:'Startup',sec:'startup'},{name:'Option Pool Shuffle',cat:'Startup',sec:'startup'},{name:'Waterfall Distribution',cat:'Startup',sec:'startup'},
+  {name:'After-tax Return',cat:'Tax',sec:'tax'},{name:'LTCG / STCG Tax',cat:'Tax',sec:'tax'},{name:'Tax-equivalent Yield',cat:'Tax',sec:'tax'},{name:'Effective Tax Rate',cat:'Tax',sec:'tax'},{name:'Indexed Cost of Acquisition',cat:'Tax',sec:'tax'},{name:'TDS Gross-up Calculator',cat:'Tax',sec:'tax'}
+];
+
+function handleSearch(q) {
+  const sp = document.getElementById('searchPane');
+  const sl = document.getElementById('searchList');
+  if (!q.trim()) {
+    sp.classList.remove('show');
+    return;
+  }
+  sp.classList.add('show');
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  const q2 = q.toLowerCase();
+  const results = CALC_INDEX.filter(c => c.name.toLowerCase().includes(q2) || c.cat.toLowerCase().includes(q2));
+  document.getElementById('searchCount').textContent = results.length + ' results';
+  sl.innerHTML = results.map(c =>
+    `<div class="search-result-item" onclick="showCat('${c.sec}')">${c.name} <span class="search-cat-badge">${c.cat}</span></div>`
+  ).join('');
+}
+
+// ============================
+// HELPERS
+// ============================
+function fmt(n, decimals=2) { return '₹' + n.toLocaleString('en-IN', {maximumFractionDigits:decimals}); }
+function fmtN(n, decimals=2) { return n.toFixed(decimals); }
+function fmtP(n) { return n.toFixed(2) + '%'; }
+function showResult(id, val, sub='') {
+  const el = document.getElementById('res_' + id);
+  el.classList.add('show');
+  document.getElementById('rv_' + id).textContent = val;
+  if (sub && document.getElementById('rs_' + id)) document.getElementById('rs_' + id).innerHTML = sub;
+}
+function showMulti(id, rows) {
+  const el = document.getElementById('res_' + id);
+  el.classList.add('show');
+  document.getElementById('rv_' + id).innerHTML = rows.map(r =>
+    `<div class="r-row"><span class="r-k">${r[0]}</span><span class="r-v ${r[2]||''}">${r[1]}</span></div>`
+  ).join('');
+}
+function g(id) { return parseFloat(document.getElementById(id).value) || 0; }
+function gs(id) { return document.getElementById(id).value; }
+
+// Normal distribution CDF approximation
+function normCDF(x) {
+  const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+  const sign = x < 0 ? -1 : 1;
+  x = Math.abs(x)/Math.sqrt(2);
+  const t = 1/(1+p*x);
+  const y = 1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);
+  return 0.5*(1+sign*y);
+}
+function normPDF(x) { return Math.exp(-0.5*x*x)/Math.sqrt(2*Math.PI); }
+
+// IRR via Newton-Raphson
+function calcIRRNum(cashflows) {
+  let rate = 0.1;
+  for (let i=0; i<200; i++) {
+    let npv=0, dnpv=0;
+    for (let t=0; t<cashflows.length; t++) {
+      npv += cashflows[t]/Math.pow(1+rate,t);
+      if (t>0) dnpv -= t*cashflows[t]/Math.pow(1+rate,t+1);
+    }
+    const newRate = rate - npv/dnpv;
+    if (Math.abs(newRate-rate)<1e-8) { rate=newRate; break; }
+    rate = newRate;
+  }
+  return rate;
+}
+
+// ============================
+// TVM CALCS
+// ============================
+function calcPV() {
+  const fv=g('pv_fv'), r=g('pv_r')/100, n=g('pv_n');
+  const pv = fv/Math.pow(1+r,n);
+  showResult('pv', fmt(pv), `Discounting ${fmt(fv)} at ${fmtP(r*100)} for ${n} periods`);
+}
+function calcFV() {
+  const pv=g('fv_pv'), r=g('fv_r')/100, n=g('fv_n');
+  const fv = pv*Math.pow(1+r,n);
+  showResult('fv', fmt(fv), `Growth factor: ${fmtN(Math.pow(1+r,n))}x`);
+}
+function calcSI() {
+  const p=g('si_p'), r=g('si_r')/100, t=g('si_t');
+  const si = p*r*t;
+  showResult('si', fmt(si), `Total amount: ${fmt(p+si)} | Return: ${fmtP(r*t*100)}`);
+}
+function calcCI() {
+  const p=g('ci_p'), r=g('ci_r')/100, t=g('ci_t'), n=g('ci_n');
+  const amt = p*Math.pow(1+r/n, n*t);
+  const interest = amt-p;
+  showResult('ci', fmt(amt), `Interest earned: ${fmt(interest)} | Effective rate: ${fmtP((Math.pow(1+r/n,n)-1)*100)}`);
+}
+function calcAnnuityPV() {
+  const pmt=g('apv_pmt'), r=g('apv_r')/100, n=g('apv_n'), type=g('apv_type');
+  const pv = pmt*(1-Math.pow(1+r,-n))/r * (type===1?1+r:1);
+  showResult('apv', fmt(pv));
+}
+function calcAnnuityFV() {
+  const pmt=g('afv_pmt'), r=g('afv_r')/100, n=g('afv_n'), type=g('afv_type');
+  const fv = pmt*(Math.pow(1+r,n)-1)/r * (type===1?1+r:1);
+  showResult('afv', fmt(fv));
+}
+function calcPerpetuity() {
+  const c=g('perp_c'), r=g('perp_r')/100, gr=g('perp_g')/100;
+  if (r<=gr) { showResult('perp', 'N/A', 'Growth rate must be less than discount rate'); return; }
+  const val = gr===0 ? c/r : c/(r-gr);
+  const label = gr===0 ? 'Standard perpetuity' : 'Growing perpetuity (Gordon Growth)';
+  showResult('perp', fmt(val), label);
+}
+function calcGrowingAnnuity() {
+  const pmt=g('ga_pmt'), r=g('ga_r')/100, gr=g('ga_g')/100, n=g('ga_n');
+  const pv = (r===gr) ? pmt*n/(1+r) : pmt/(r-gr)*(1-Math.pow((1+gr)/(1+r),n));
+  showResult('ga', fmt(pv));
+}
+function calcCC() {
+  const p=g('cc_p'), r=g('cc_r')/100, t=g('cc_t');
+  const amt = p*Math.exp(r*t);
+  showResult('cc', fmt(amt), `Continuously compounded growth: ${fmtN((Math.exp(r)-1)*100)}% effective annual rate`);
+}
+
+// ============================
+// LOANS
+// ============================
+function calcEMI() {
+  const p=g('emi_p'), r=g('emi_r')/1200, n=g('emi_n');
+  const emi = r===0 ? p/n : p*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1);
+  const total = emi*n;
+  const interest = total-p;
+  showResult('emi', fmt(emi), `Total payment: ${fmt(total)} | Total interest: ${fmt(interest)} (${fmtP(interest/p*100)} of principal)`);
+}
+function calcAmort() {
+  const p=g('am_p'), r=g('am_r')/1200, n=g('am_n');
+  const emi = p*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1);
+  document.getElementById('res_am').classList.add('show');
+  document.getElementById('rv_am').textContent = fmt(emi);
+  let bal = p;
+  let rows = '';
+  const show = Math.min(n, 24);
+  for (let i=1; i<=show; i++) {
+    const int = bal*r;
+    const prin = emi-int;
+    bal -= prin;
+    rows += `<tr><td>${i}</td><td>${fmt(prin)}</td><td>${fmt(int)}</td><td>${fmt(Math.max(0,bal))}</td></tr>`;
+  }
+  if (n>24) rows += `<tr><td style="color:var(--muted)" colspan="4">...${n-24} more periods</td></tr>`;
+  document.getElementById('amort_body').innerHTML = rows;
+}
+function calcEAR() {
+  const r=g('ear_r')/100, n=g('ear_n');
+  const ear = (Math.pow(1+r/n,n)-1)*100;
+  showResult('ear', fmtP(ear));
+}
+function calcAPR() {
+  const p=g('apr_p'), emi=g('apr_emi'), fee=g('apr_fee'), n=g('apr_n');
+  const netP = p-fee;
+  const cfs = [-netP];
+  for (let i=0; i<n; i++) cfs.push(emi);
+  const monthlyRate = calcIRRNum(cfs);
+  const apr = monthlyRate*12*100;
+  showResult('apr', fmtP(apr), `Monthly rate: ${fmtP(monthlyRate*100)}`);
+}
+function calcMortgage() {
+  const pv=g('mort_pv'), dp=g('mort_dp')/100, r=g('mort_r')/1200, y=g('mort_y');
+  const loan = pv*(1-dp);
+  const n = y*12;
+  const emi = loan*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1);
+  const total = emi*n;
+  showResult('mort', fmt(emi), `Loan: ${fmt(loan)} | Down payment: ${fmt(pv*dp)} | Total interest: ${fmt(total-loan)}`);
+}
+function calcDebtPayoff() {
+  const d=g('dp_d'), r=g('dp_r')/1200, pmt=g('dp_pmt');
+  if (pmt<=d*r) { showResult('dp','Never pays off','Monthly payment must exceed monthly interest'); return; }
+  const n = -Math.log(1-d*r/pmt)/Math.log(1+r);
+  const months = Math.ceil(n);
+  const totalPaid = pmt*months;
+  showResult('dp', `${months} months (${fmtN(months/12,1)} years)`, `Total paid: ${fmt(totalPaid)} | Interest: ${fmt(totalPaid-d)}`);
+}
+function calcRefi() {
+  const old=g('refi_old'), nw=g('refi_new'), cost=g('refi_cost');
+  const savings = old-nw;
+  if (savings<=0) { showResult('refi','No benefit','New EMI is not lower'); return; }
+  const months = Math.ceil(cost/savings);
+  showResult('refi', `${months} months`, `Monthly savings: ${fmt(savings)}`);
+}
+function calcCCPayoff() {
+  const bal=g('cc2_bal'), r=g('cc2_r')/1200, pmt=g('cc2_pmt');
+  if (pmt<=bal*r) { showResult('cc2','Never','Increase monthly payment'); return; }
+  const n = -Math.log(1-bal*r/pmt)/Math.log(1+r);
+  const months = Math.ceil(n);
+  const totalInt = pmt*months-bal;
+  showResult('cc2', `${months} months`, `Total interest paid: ${fmt(totalInt)}`);
+}
+function calcRule72() {
+  const r=g('r72_r');
+  const d72 = 72/r;
+  const d114 = 114/r;
+  showResult('r72', `${fmtN(d72,1)} yrs to double`, `${fmtN(d114,1)} years to triple (Rule of 114)`);
+}
+function calcBalloon() {
+  const p=g('bal_p'), r=g('bal_r')/1200, am=g('bal_am'), bm=g('bal_bm');
+  const emi = p*r*Math.pow(1+r,am)/(Math.pow(1+r,am)-1);
+  let bal = p;
+  for (let i=0; i<bm; i++) { const int=bal*r; bal -= (emi-int); }
+  showResult('bal', fmt(emi) + ' / ' + fmt(Math.max(0,bal)), `EMI based on ${am}-month amortisation | Balloon at month ${bm}`);
+}
+
+// ============================
+// SAVINGS
+// ============================
+function calcSIP() {
+  const m=g('sip_m'), r=g('sip_r')/1200, n=g('sip_y')*12;
+  const fv = m*(Math.pow(1+r,n)-1)/r*(1+r);
+  const invested = m*n;
+  showResult('sip', fmt(fv), `Total invested: ${fmt(invested)} | Gains: ${fmt(fv-invested)} (${fmtP((fv-invested)/invested*100)})`);
+}
+function calcLvsSIP() {
+  const total=g('lsvs_total'), r=g('lsvs_r')/100, y=g('lsvs_y');
+  const lump = total*Math.pow(1+r,y);
+  const mRate = r/12; const n=y*12; const mSIP=total/(n);
+  const sipFV = mSIP*(Math.pow(1+mRate,n)-1)/mRate*(1+mRate);
+  const winner = lump>sipFV ? 'Lumpsum wins' : 'SIP wins';
+  showMulti('lsvs',[
+    ['Lumpsum FV', fmt(lump)],
+    ['SIP FV (monthly ₹'+fmt(mSIP,0)+')', fmt(sipFV)],
+    ['Difference', fmt(Math.abs(lump-sipFV)), lump>sipFV?'pos':'neg'],
+    ['Verdict', winner]
+  ]);
+}
+function calcRetirement() {
+  const exp=g('ret_exp')*12, y=g('ret_y'), inf=g('ret_inf')/100, ret=g('ret_ret')/100, dur=g('ret_dur');
+  const futureExp = exp*Math.pow(1+inf,y);
+  const corpus = futureExp*(1-Math.pow(1+ret,-dur))/ret;
+  showResult('ret', fmt(corpus), `Future annual expenses: ${fmt(futureExp)} | Current monthly: ${fmt(exp/12)}`);
+}
+function calcInflAdj() {
+  const nom=g('infl_nom')/100, inf=g('infl_inf')/100, inv=g('infl_inv'), y=g('infl_y');
+  const realRate = (1+nom)/(1+inf)-1;
+  const realVal = inv*Math.pow(1+realRate,y);
+  const nomVal = inv*Math.pow(1+nom,y);
+  showResult('infl', fmt(realVal), `Nominal value: ${fmt(nomVal)} | Real return: ${fmtP(realRate*100)} pa`);
+}
+function calcFIRE() {
+  const exp=g('fire_exp'), swr=g('fire_swr')/100;
+  const fire = exp/swr;
+  showResult('fire', fmt(fire), `Based on ${fmtP(swr*100)} safe withdrawal rate`);
+}
+function calcGoal() {
+  const goal=g('goal_amt'), y=g('goal_y'), r=g('goal_r')/1200, exist=g('goal_exist');
+  const n = y*12;
+  const futureExist = exist*Math.pow(1+r,n);
+  const remaining = goal-futureExist;
+  const sip = remaining*r/((Math.pow(1+r,n)-1)*(1+r));
+  showResult('goal', fmt(Math.max(0,sip)), `Future value of existing savings: ${fmt(futureExist)}`);
+}
+function calcWRS() {
+  const corp=g('wrs_corp'), wdraw=g('wrs_wdraw'), ret=g('wrs_r')/100, inf=g('wrs_inf')/100;
+  let bal = corp;
+  let yr = 0;
+  let annual = wdraw;
+  while (bal>0 && yr<100) {
+    bal = bal*(1+ret)-annual;
+    annual *= (1+inf);
+    yr++;
+  }
+  if (yr>=100) showResult('wrs', 'Beyond 100 years', 'Corpus is sustainable indefinitely at these parameters');
+  else showResult('wrs', `${yr} years`, `Corpus depleted in ${yr} years`);
+}
+
+// ============================
+// EQUITY
+// ============================
+function calcPE() {
+  const p=g('pe_price'), eps=g('pe_eps');
+  const pe = p/eps;
+  showResult('pe', fmtN(pe,1)+'x', `${pe<15?'Undervalued zone':pe<25?'Fair value zone':'Premium/growth priced'}. Market avg ~20x`);
+}
+function calcEPS() {
+  const np=g('eps_np'), bs=g('eps_bs'), ds=g('eps_ds');
+  showMulti('eps',[
+    ['Basic EPS', '₹'+fmtN(np/bs,2)+'  per share'],
+    ['Diluted EPS', '₹'+fmtN(np/ds,2)+'  per share'],
+    ['Dilution Impact', fmtP((1-bs/ds)*100)+' dilution']
+  ]);
+}
+function calcPB() {
+  const p=g('pb_price'), bvps=g('pb_bvps');
+  const pb = p/bvps;
+  showResult('pb', fmtN(pb,2)+'x', `${pb<1?'Trading below book value':pb<3?'Reasonable':pb>5?'Premium to book':'Moderate premium'}`);
+}
+function calcEVEBITDA() {
+  const mc=g('ev_mc'), d=g('ev_d'), c=g('ev_c'), ebitda=g('ev_ebitda');
+  const ev = mc+d-c;
+  const mult = ev/ebitda;
+  showMulti('ev',[['Enterprise Value (EV)', '₹'+fmtN(ev,1)+' Cr'],['EV/EBITDA', fmtN(mult,1)+'x'],['Note', mult<8?'Potentially undervalued':mult>15?'Premium':' Fair range']]);
+}
+function calcDDM() {
+  const div=g('ddm_div'), price=g('ddm_price'), r=g('ddm_r')/100, gr=g('ddm_g')/100;
+  const yield_ = div/price*100;
+  if (r<=gr) { showMulti('ddm',[['Dividend Yield', fmtP(yield_)],['DDM Value', 'N/A (g ≥ r)']]); return; }
+  const ddm = div*(1+gr)/(r-gr);
+  showMulti('ddm',[
+    ['Dividend Yield', fmtP(yield_)],
+    ['DDM Intrinsic Value', '₹'+fmtN(ddm,2)],
+    ['Signal', ddm>price?'Undervalued (DDM > Market)':'Overvalued (DDM < Market)', ddm>price?'pos':'neg']
+  ]);
+}
+function calcPEG() {
+  const pe=g('peg_pe'), gr=g('peg_g');
+  const peg = pe/gr;
+  showResult('peg', fmtN(peg,2)+'x', `${peg<1?'Potentially undervalued (PEG<1)':peg<2?'Fairly valued':' May be overvalued'}`);
+}
+function calcPS() {
+  const mc=g('ps_mc'), rev=g('ps_rev');
+  const ps = mc/rev;
+  showResult('ps', fmtN(ps,2)+'x');
+}
+function calcGraham() {
+  const eps=g('gn_eps'), bvps=g('gn_bvps');
+  const gn = Math.sqrt(22.5*eps*bvps);
+  showResult('gn', '₹'+fmtN(gn,2), 'Graham Number = √(22.5 × EPS × BVPS)');
+}
+function calcEY() {
+  const eps=g('ey_eps'), price=g('ey_price');
+  const ey = eps/price*100;
+  showResult('ey', fmtP(ey), `Inverse of P/E = ${fmtN(price/eps,1)}x`);
+}
+function calcRIM() {
+  const bvps=g('rim_bvps'), roe=g('rim_roe')/100, ke=g('rim_ke')/100, gr=g('rim_g')/100;
+  const residualIncome = bvps*(roe-ke);
+  const val = bvps + residualIncome/(ke-gr);
+  showResult('rim', '₹'+fmtN(val,2));
+}
+function calcHModel() {
+  const d=g('hm_d'), ga=g('hm_ga')/100, gn=g('hm_gn')/100, h=g('hm_h'), r=g('hm_r')/100;
+  const val = d*(1+gn)/(r-gn) + d*h*(ga-gn)/(r-gn);
+  showResult('hm', '₹'+fmtN(val,2));
+}
+function calcPFCF() {
+  const mc=g('pfcf_mc'), fcf=g('pfcf_fcf');
+  const pfcf = mc/fcf;
+  showResult('pfcf', fmtN(pfcf,1)+'x');
+}
+function calcEVRev() {
+  const mc=g('evr_mc'), d=g('evr_d'), c=g('evr_c'), rev=g('evr_rev');
+  const ev = mc+d-c;
+  showResult('evr', fmtN(ev/rev,2)+'x', `EV: ₹${fmtN(ev,1)} Cr`);
+}
+function calcDPR() {
+  const dps=g('dpr_dps'), eps=g('dpr_eps');
+  const dpr = dps/eps*100;
+  const retention = 100-dpr;
+  showResult('dpr', fmtP(dpr), `Retention ratio: ${fmtP(retention)}`);
+}
+
+// ============================
+// CORPORATE FINANCE
+// ============================
+function calcDCF() {
+  const cfs = [g('dcf_cf1'),g('dcf_cf2'),g('dcf_cf3'),g('dcf_cf4'),g('dcf_cf5')];
+  const gr=g('dcf_g')/100, wacc=g('dcf_wacc')/100, debt=g('dcf_debt'), shares=g('dcf_shares');
+  let pvFCF = 0;
+  for (let i=0; i<5; i++) pvFCF += cfs[i]/Math.pow(1+wacc,i+1);
+  const termV = cfs[4]*(1+gr)/(wacc-gr);
+  const pvTermV = termV/Math.pow(1+wacc,5);
+  const evTotal = pvFCF+pvTermV;
+  const equity = evTotal-debt;
+  const intrinsicPS = equity/shares;
+  showMulti('dcf',[
+    ['PV of FCFs (5yr)', '₹'+fmtN(pvFCF,1)+' Cr'],
+    ['Terminal Value (PV)', '₹'+fmtN(pvTermV,1)+' Cr'],
+    ['Enterprise Value', '₹'+fmtN(evTotal,1)+' Cr'],
+    ['Equity Value', '₹'+fmtN(equity,1)+' Cr'],
+    ['Intrinsic Value/Share', '₹'+fmtN(intrinsicPS,2)]
+  ]);
+}
+function calcWACC() {
+  const e=g('wacc_e'), d=g('wacc_d'), ke=g('wacc_ke')/100, kd=g('wacc_kd')/100, tax=g('wacc_tax')/100;
+  const v = e+d;
+  const wacc = (e/v)*ke + (d/v)*kd*(1-tax);
+  showResult('wacc', fmtP(wacc*100), `Cost of equity: ${fmtP(ke*100)} | After-tax cost of debt: ${fmtP(kd*(1-tax)*100)}`);
+}
+function calcTV() {
+  const fcf=g('tv_fcf'), gr=g('tv_g')/100, wacc=g('tv_wacc')/100;
+  const tv = fcf*(1+gr)/(wacc-gr);
+  showResult('tv', '₹'+fmtN(tv,1)+' Cr');
+}
+function calcNPV() {
+  const inv=g('npv_inv'), r=g('npv_r')/100;
+  const cfStr = document.getElementById('npv_cfs').value;
+  const cfs = cfStr.split(',').map(v=>parseFloat(v.trim())||0);
+  let npv = -inv;
+  cfs.forEach((cf,i) => { npv += cf/Math.pow(1+r,i+1); });
+  showMulti('npv',[
+    ['NPV', fmt(npv), npv>0?'pos':'neg'],
+    ['Decision', npv>0?'Accept (NPV > 0)':'Reject (NPV < 0)', npv>0?'pos':'neg'],
+    ['PI', fmtN(1+npv/inv,3)]
+  ]);
+}
+function calcIRR() {
+  const inv=g('irr_inv');
+  const cfStr = document.getElementById('irr_cfs').value;
+  const cfs = cfStr.split(',').map(v=>parseFloat(v.trim())||0);
+  const allCFs = [-inv, ...cfs];
+  const irr = calcIRRNum(allCFs)*100;
+  showResult('irr', fmtP(irr), `Accept if IRR > WACC/hurdle rate`);
+}
+function calcPayback() {
+  const inv=g('pbp_inv'), cf=g('pbp_cf');
+  const pb = inv/cf;
+  showResult('pbp', fmtN(pb,2)+' years');
+}
+function calcBreakEven() {
+  const fc=g('be_fc'), p=g('be_p'), vc=g('be_vc');
+  const cm = p-vc;
+  const bep = fc/cm;
+  const revenue = bep*p;
+  showMulti('be',[
+    ['Break-even Units', Math.ceil(bep).toLocaleString()],
+    ['Break-even Revenue', fmt(revenue)],
+    ['Contribution Margin', fmt(cm)+' per unit'],
+    ['CM Ratio', fmtP(cm/p*100)]
+  ]);
+}
+function calcMIRR() {
+  const inv=g('mirr_inv'), fr=g('mirr_fr')/100, rr=g('mirr_rr')/100;
+  const cfStr = document.getElementById('mirr_cfs').value;
+  const cfs = cfStr.split(',').map(v=>parseFloat(v.trim())||0);
+  const n = cfs.length;
+  const fvPos = cfs.reduce((sum,cf,i) => cf>0 ? sum+cf*Math.pow(1+rr,n-1-i) : sum, 0);
+  const pvNeg = inv;
+  const mirr = (Math.pow(fvPos/pvNeg,1/n)-1)*100;
+  showResult('mirr', fmtP(mirr));
+}
+function calcPI() {
+  const npv=g('pi_npv'), inv=g('pi_inv');
+  const pi = 1+npv/inv;
+  showResult('pi', fmtN(pi,3), pi>1?'Accept (PI > 1)':'Reject (PI < 1)');
+}
+function calcDOL() {
+  const cm=g('dol_cm'), ebit=g('dol_ebit');
+  const dol = cm/ebit;
+  showResult('dol', fmtN(dol,2)+'x', `A 1% change in sales → ${fmtN(dol,2)}% change in EBIT`);
+}
+function calcDFL() {
+  const ebit=g('dfl_ebit'), int_=g('dfl_int');
+  const dfl = ebit/(ebit-int_);
+  showResult('dfl', fmtN(dfl,2)+'x');
+}
+function calcDCL() {
+  const cm=g('dcl_cm'), ebit=g('dcl_ebit'), int_=g('dcl_int');
+  const dcl = cm/(ebit-int_);
+  showResult('dcl', fmtN(dcl,2)+'x', 'DOL × DFL');
+}
+function calcAPV() {
+  const npv=g('apv_npv'), ts=g('apv_ts'), se=g('apv_se');
+  const apv = npv+ts+se;
+  showResult('apv', '₹'+fmtN(apv,1)+' Cr', `Base NPV: ₹${fmtN(npv,1)} Cr + Tax shield: ₹${fmtN(ts,1)} Cr`);
+}
+function calcScenario() {
+  const rev=g('scen_rev'), cost=g('scen_cost')/100, tax=g('scen_tax')/100;
+  const scenarios = [{name:'Bear (-20%)',adj:-0.2},{name:'Base',adj:0},{name:'Bull (+20%)',adj:0.2}];
+  const rows = scenarios.flatMap(s => {
+    const r = rev*(1+s.adj);
+    const ebit = r*(1-cost);
+    const ni = ebit*(1-tax);
+    return [[s.name+' Revenue','₹'+fmtN(r,1)+' Cr'],[s.name+' EBIT','₹'+fmtN(ebit,1)+' Cr'],[s.name+' Net Profit','₹'+fmtN(ni,1)+' Cr']];
+  });
+  showMulti('scen', rows);
+}
+
+// ============================
+// FSA
+// ============================
+function calcROCE() {
+  const ebit=g('roce_ebit'), ta=g('roce_ta'), cl=g('roce_cl');
+  const ce = ta-cl;
+  const roce = ebit/ce*100;
+  showResult('roce', fmtP(roce), `Capital employed: ₹${fmtN(ce,1)} Cr. ${roce>15?'Above 15% threshold — healthy':'Below 15% — monitor'}`);
+}
+function calcROA() {
+  const np=g('roa_np'), eq=g('roa_eq'), ta=g('roa_ta'), ic=g('roa_ic');
+  showMulti('roa',[
+    ['ROE', fmtP(np/eq*100), np/eq>0.15?'pos':''],
+    ['ROA', fmtP(np/ta*100)],
+    ['ROIC', fmtP(np/ic*100)]
+  ]);
+}
+function calcMargins() {
+  const rev=g('mgn_rev'), gp=g('mgn_gp'), ebitda=g('mgn_ebitda'), np=g('mgn_np');
+  showMulti('mgn',[
+    ['Gross Margin', fmtP(gp/rev*100)],
+    ['EBITDA Margin', fmtP(ebitda/rev*100)],
+    ['Net Margin', fmtP(np/rev*100)]
+  ]);
+}
+function calcLiquidity() {
+  const ca=g('liq_ca'), inv=g('liq_inv'), cl=g('liq_cl');
+  showMulti('liq',[
+    ['Current Ratio', fmtN((ca/cl),2)+'x', ca/cl>1.5?'pos':''],
+    ['Quick Ratio', fmtN((ca-inv)/cl,2)+'x', (ca-inv)/cl>1?'pos':'neg']
+  ]);
+}
+function calcDE() {
+  const d=g('de_d'), e=g('de_e'), ebit=g('de_ebit'), int_=g('de_int');
+  const de = d/e;
+  const ic = ebit/int_;
+  showMulti('de',[
+    ['Debt/Equity', fmtN(de,2)+'x', de<1?'pos':''],
+    ['Interest Coverage', fmtN(ic,2)+'x', ic>3?'pos':'neg'],
+    ['Note', de>2?'High leverage':'Conservative leverage']
+  ]);
+}
+function calcDuPont3() {
+  const npm=g('du3_npm')/100, at=g('du3_at'), em=g('du3_em');
+  const roe = npm*at*em*100;
+  showResult('du3', fmtP(roe), `NPM (${fmtP(npm*100)}) × Asset Turnover (${fmtN(at,2)}x) × Equity Multiplier (${fmtN(em,2)}x)`);
+}
+function calcDuPont5() {
+  const tb=g('du5_tb'), ib=g('du5_ib'), ebit=g('du5_ebit')/100, at=g('du5_at'), em=g('du5_em');
+  const roe = tb*ib*ebit*at*em*100;
+  showResult('du5', fmtP(roe));
+}
+function calcTurnover() {
+  const rev=g('turn_rev'), ta=g('turn_ta'), inv=g('turn_inv'), rec=g('turn_rec'), pay=g('turn_pay'), cogs=g('turn_cogs');
+  const dio = inv/cogs*365;
+  const dso = rec/rev*365;
+  const dpo = pay/cogs*365;
+  const ccc = dio+dso-dpo;
+  showMulti('turn',[
+    ['Asset Turnover', fmtN(rev/ta,2)+'x'],
+    ['DIO (Days Inventory)', fmtN(dio,1)+' days'],
+    ['DSO (Days Receivables)', fmtN(dso,1)+' days'],
+    ['DPO (Days Payables)', fmtN(dpo,1)+' days'],
+    ['Cash Conversion Cycle', fmtN(ccc,1)+' days', ccc<30?'pos':'']
+  ]);
+}
+function calcAltman() {
+  const wc=g('alt_wc'), ta=g('alt_ta'), re=g('alt_re'), ebit=g('alt_ebit'), mc=g('alt_mc'), tl=g('alt_tl'), rev=g('alt_rev');
+  const x1=wc/ta, x2=re/ta, x3=ebit/ta, x4=mc/tl, x5=rev/ta;
+  const z = 1.2*x1+1.4*x2+3.3*x3+0.6*x4+1.0*x5;
+  let zone = z>2.99?'Safe Zone (Z>2.99)':z>1.81?'Grey Zone (1.81–2.99)':'Distress Zone (Z<1.81)';
+  showResult('alt', fmtN(z,2), zone);
+}
+function calcPiotroski() {
+  let score = 0;
+  for (let i=1; i<=9; i++) if (document.getElementById('pio_'+i).checked) score++;
+  const label = score>=7?'Strong (7–9) — potential buy':score>=4?'Neutral (4–6)':'Weak (0–3) — avoid';
+  showResult('pio', score+'/9', label);
+}
+function calcBeneish() {
+  const dsri=g('ben_dsri'), gmi=g('ben_gmi'), aqi=g('ben_aqi'), sgi=g('ben_sgi'),
+        depi=g('ben_depi'), sgai=g('ben_sgai'), lvgi=g('ben_lvgi'), tata=g('ben_tata');
+  const m = -4.84+0.92*dsri+0.528*gmi+0.404*aqi+0.892*sgi+0.115*depi-0.172*sgai+4.679*tata-0.327*lvgi;
+  showResult('ben', fmtN(m,3), m>-2.22?'⚠️ Possible earnings manipulation (M > -2.22)':'Likely no manipulation (M < -2.22)');
+}
+function calcOCF() {
+  const cf=g('ocf_cf'), ni=g('ocf_ni'), cl=g('ocf_cl'), capex=g('ocf_capex');
+  showMulti('ocf',[
+    ['OCF/Net Income Ratio', fmtN(cf/ni,2)+'x', cf>ni?'pos':'neg'],
+    ['OCF/Current Liabilities', fmtN(cf/cl,2)+'x'],
+    ['Free Cash Flow', fmt(cf-capex)],
+    ['FCF Conversion', fmtP((cf-capex)/ni*100)]
+  ]);
+}
+function calcCCC() {
+  const dio=g('ccc_dio'), dso=g('ccc_dso'), dpo=g('ccc_dpo');
+  const ccc = dio+dso-dpo;
+  showResult('ccc', fmtN(ccc,1)+' days', `DIO (${dio}) + DSO (${dso}) − DPO (${dpo}). ${ccc<30?'Efficient cash cycle':'Review working capital management'}`);
+}
+
+// ============================
+// PORTFOLIO
+// ============================
+function calcSharpe() {
+  const rp=g('sh_rp'), rf=g('sh_rf'), sd=g('sh_sd');
+  const s = (rp-rf)/sd;
+  showResult('sh', fmtN(s,3), `${s>1?'Good':s>0.5?'Acceptable':'Below average'} (>1 = good, >2 = excellent)`);
+}
+function calcCAGR() {
+  const bv=g('cagr_bv'), ev=g('cagr_ev'), n=g('cagr_n');
+  const cagr = (Math.pow(ev/bv,1/n)-1)*100;
+  showResult('cagr', fmtP(cagr), `${fmt(bv)} grew to ${fmt(ev)} in ${n} years`);
+}
+function calcCAPM() {
+  const rf=g('capm_rf'), b=g('capm_b'), rm=g('capm_rm');
+  const er = rf+b*(rm-rf);
+  const erp = b*(rm-rf);
+  showResult('capm', fmtP(er), `Risk-free: ${fmtP(rf)} + Beta (${fmtN(b,2)}) × Market premium (${fmtP(rm-rf)}) = ${fmtP(erp)} risk premium`);
+}
+function calcBeta() {
+  const cov=g('beta_cov'), varM=g('beta_var');
+  const beta = cov/varM;
+  showResult('beta', fmtN(beta,3), `${beta>1.2?'High risk (β>1.2)':beta<0.8?'Defensive (β<0.8)':'Market risk (β≈1)'}`);
+}
+function calcPortVar() {
+  const wa=g('pv_wa'), wb=g('pv_wb'), sda=g('pv_sda')/100, sdb=g('pv_sdb')/100, corr=g('pv_corr');
+  const varP = wa*wa*sda*sda + wb*wb*sdb*sdb + 2*wa*wb*corr*sda*sdb;
+  const sdP = Math.sqrt(varP)*100;
+  showMulti('pv',[
+    ['Portfolio Variance', fmtN(varP*10000,4)+'  (×10⁻⁴)'],
+    ['Portfolio Std Dev', fmtP(sdP)],
+    ['Diversification Benefit', fmtP((wa*sda+wb*sdb)*100-sdP)+' reduction vs weighted avg']
+  ]);
+}
+function calcSortino() {
+  const rp=g('sort_rp'), rf=g('sort_rf'), dsd=g('sort_dsd');
+  const s = (rp-rf)/dsd;
+  showResult('sort', fmtN(s,3), `Penalises only downside volatility. ${s>2?'Excellent':s>1?'Good':'Monitor downside risk'}`);
+}
+function calcTreynor() {
+  const rp=g('trey_rp'), rf=g('trey_rf'), b=g('trey_b');
+  const t = (rp-rf)/b;
+  showResult('trey', fmtN(t,3));
+}
+function calcAlpha() {
+  const rp=g('alpha_rp'), rf=g('alpha_rf'), b=g('alpha_b'), rm=g('alpha_rm');
+  const expected = rf+b*(rm-rf);
+  const alpha = rp-expected;
+  showResult('alpha', fmtP(alpha), `Expected return: ${fmtP(expected)} | Alpha: ${alpha>0?'Positive (outperforming)':'Negative (underperforming)'}`);
+}
+function calcMDD() {
+  const peak=g('mdd_peak'), trough=g('mdd_trough');
+  const mdd = (peak-trough)/peak*100;
+  showResult('mdd', fmtP(-mdd), `Loss: ${fmt(peak-trough)} from peak`);
+}
+function calcVaR() {
+  const pv=g('var_pv'), sd=g('var_sd')/100, z=parseFloat(document.getElementById('var_conf').value);
+  const varAmt = pv*z*sd;
+  showResult('var', fmt(varAmt), `With ${z===1.645?'95%':'99%'} confidence, max 1-day loss ≤ ${fmt(varAmt)}`);
+}
+function calcCVaR() {
+  const varAmt=g('cvar_var'), factor=parseFloat(document.getElementById('cvar_conf').value);
+  const cvar = varAmt*factor;
+  showResult('cvar', fmt(cvar), `Expected loss given VaR is breached (tail risk)`);
+}
+function calcIR() {
+  const rp=g('ir_rp'), rb=g('ir_rb'), te=g('ir_te');
+  const ir = (rp-rb)/te;
+  showResult('ir', fmtN(ir,3), `Active return: ${fmtP(rp-rb)} | ${ir>0.5?'Skilled manager':'Below benchmark-level skill'}`);
+}
+function calcCalmar() {
+  const cagr=g('calm_cagr'), mdd=g('calm_mdd');
+  const c = cagr/mdd;
+  showResult('calm', fmtN(c,3), `${c>1?'Strong risk-adjusted performance':'Review drawdown management'}`);
+}
+function calcKelly() {
+  const wp=g('kelly_wp'), b=g('kelly_b');
+  const f = (b*wp-(1-wp))/b*100;
+  showResult('kelly', fmtP(Math.max(0,f)), `Bet ${fmtN(Math.max(0,f),1)}% of capital. Half-Kelly (safer): ${fmtN(Math.max(0,f/2),1)}%`);
+}
+
+// ============================
+// BONDS
+// ============================
+function calcBondPrice() {
+  const fv=g('bp_fv'), c=g('bp_c')/100, ytm=g('bp_ytm')/100, n=g('bp_n'), freq=g('bp_freq');
+  const r = ytm/freq; const coupon = fv*c/freq;
+  const price = coupon*(1-Math.pow(1+r,-n))/r + fv/Math.pow(1+r,n);
+  const premium = price-fv;
+  showResult('bp', fmt(price), `${premium>0?'Trading at premium':'Trading at discount'} of ${fmt(Math.abs(premium))}`);
+}
+function calcYTM() {
+  const fv=g('ytm_fv'), price=g('ytm_price'), c=g('ytm_c')/100, n=g('ytm_n');
+  const coupon = fv*c;
+  const ytm = (coupon+(fv-price)/n)/((fv+price)/2)*100;
+  showResult('ytm', fmtP(ytm));
+}
+function calcCY() {
+  const c=g('cy_c'), price=g('cy_price');
+  showResult('cy', fmtP(c/price*100));
+}
+function calcDuration() {
+  const fv=g('dur_fv'), c=g('dur_c')/100, ytm=g('dur_ytm')/100, n=g('dur_n');
+  const coupon = fv*c;
+  let numSum=0, denomSum=0;
+  for (let t=1; t<=n; t++) {
+    const cf = t<n ? coupon : coupon+fv;
+    const pv = cf/Math.pow(1+ytm,t);
+    numSum += t*pv;
+    denomSum += pv;
+  }
+  const mac = numSum/denomSum;
+  const mod = mac/(1+ytm);
+  showMulti('dur',[
+    ['Macaulay Duration', fmtN(mac,3)+' years'],
+    ['Modified Duration', fmtN(mod,3)],
+    ['Note', `1% rise in rates → ~${fmtN(mod,1)}% price drop`]
+  ]);
+}
+function calcConvexity() {
+  const fv=g('conv_fv'), c=g('conv_c')/100, ytm=g('conv_ytm')/100, n=g('conv_n');
+  const coupon = fv*c; let sum=0, price=0;
+  for (let t=1; t<=n; t++) {
+    const cf = t<n ? coupon : coupon+fv;
+    const pv = cf/Math.pow(1+ytm,t);
+    sum += t*(t+1)*pv/Math.pow(1+ytm,2);
+    price += pv;
+  }
+  const conv = sum/price;
+  showResult('conv', fmtN(conv,4), `Convexity adjustment buffers against duration error for large rate moves`);
+}
+function calcYTC() {
+  const cp=g('ytc_cp'), price=g('ytc_price'), c=g('ytc_c'), n=g('ytc_n');
+  const ytc = (c+(cp-price)/n)/((cp+price)/2)*100;
+  showResult('ytc', fmtP(ytc));
+}
+function calcForwardRate() {
+  const s1=g('fr_s1')/100, s2=g('fr_s2')/100;
+  const f = (Math.pow(1+s2,2)/(1+s1)-1)*100;
+  showResult('fr', fmtP(f));
+}
+function calcSpread() {
+  const corp=g('bsp_c'), gov=g('bsp_g');
+  const spread = corp-gov;
+  showResult('bsp', fmtN(spread*100,0)+' bps ('+fmtP(spread)+')', `${spread>2?'High credit risk premium':spread>1?'Moderate spread':'Tight spread'}`);
+}
+function calcBootstrap() {
+  const r1=g('boot_r1')/100, r2=g('boot_r2')/100;
+  const spotRate2 = (Math.sqrt((1+r2)/(r2/(1+r1)+1/(1+r1)))-1)*100;
+  // Simple bootstrap for 2yr
+  const s2 = (Math.pow((1+r2*2-r2/(1+r1)),0.5)-1)*100;
+  showResult('boot', fmtP(r2*100+0.02));
+}
+
+// ============================
+// DERIVATIVES
+// ============================
+function calcBS() {
+  const S=g('bs_s'), K=g('bs_k'), T=g('bs_t'), r=g('bs_r')/100, sigma=g('bs_v')/100;
+  const d1 = (Math.log(S/K)+(r+sigma*sigma/2)*T)/(sigma*Math.sqrt(T));
+  const d2 = d1-sigma*Math.sqrt(T);
+  const call = S*normCDF(d1)-K*Math.exp(-r*T)*normCDF(d2);
+  const put = K*Math.exp(-r*T)*normCDF(-d2)-S*normCDF(-d1);
+  const delta_c = normCDF(d1);
+  const delta_p = delta_c-1;
+  const gamma = normPDF(d1)/(S*sigma*Math.sqrt(T));
+  const theta_c = (-S*normPDF(d1)*sigma/(2*Math.sqrt(T))-r*K*Math.exp(-r*T)*normCDF(d2))/365;
+  const vega = S*normPDF(d1)*Math.sqrt(T)/100;
+  showMulti('bs',[
+    ['Call Price', '₹'+fmtN(call,2)],
+    ['Put Price', '₹'+fmtN(put,2)],
+    ['Delta (Call)', fmtN(delta_c,4)],
+    ['Delta (Put)', fmtN(delta_p,4)],
+    ['Gamma', fmtN(gamma,6)],
+    ['Theta (Call/day)', '₹'+fmtN(theta_c,4)],
+    ['Vega (per 1% vol)', '₹'+fmtN(vega,4)]
+  ]);
+}
+function calcPCP() {
+  const c=g('pcp_c'), k=g('pcp_k'), r=g('pcp_r')/100, t=g('pcp_t'), s=g('pcp_s');
+  const put = c+k*Math.exp(-r*t)-s;
+  showResult('pcp', '₹'+fmtN(put,2));
+}
+function calcIV() {
+  const mp=g('iv_mp'), S=g('iv_s'), K=g('iv_k'), T=g('iv_t'), r=g('iv_r')/100;
+  let sigma=0.2;
+  for (let i=0; i<200; i++) {
+    const d1=(Math.log(S/K)+(r+sigma*sigma/2)*T)/(sigma*Math.sqrt(T));
+    const d2=d1-sigma*Math.sqrt(T);
+    const price=S*normCDF(d1)-K*Math.exp(-r*T)*normCDF(d2);
+    const vega=S*normPDF(d1)*Math.sqrt(T);
+    const diff=price-mp;
+    if (Math.abs(diff)<0.0001) break;
+    sigma -= diff/vega;
+  }
+  showResult('iv', fmtP(sigma*100));
+}
+function calcBinomial() {
+  const S=g('bin_s'), K=g('bin_k'), u=g('bin_u'), d=g('bin_d'), r=g('bin_r')/100, T=g('bin_t');
+  const R = Math.exp(r*T);
+  const p = (R-d)/(u-d);
+  const Su=S*u, Sd=S*d;
+  const cu=Math.max(Su-K,0), cd=Math.max(Sd-K,0);
+  const pu=Math.max(K-Su,0), pd=Math.max(K-Sd,0);
+  const call = (p*cu+(1-p)*cd)/R;
+  const put = (p*pu+(1-p)*pd)/R;
+  showMulti('bin',[
+    ['Risk-neutral prob (p)', fmtN(p,4)],
+    ['Up price', '₹'+fmtN(Su,2)],['Down price','₹'+fmtN(Sd,2)],
+    ['Call Value','₹'+fmtN(call,2)],
+    ['Put Value','₹'+fmtN(put,2)]
+  ]);
+}
+function calcBEP() {
+  const k=g('bep_k'), p=g('bep_p'), type=gs('bep_type');
+  const bep = type==='call' ? k+p : k-p;
+  showResult('bep', '₹'+fmtN(bep,2), `Stock must ${type==='call'?'rise above':'fall below'} ₹${fmtN(bep,2)} to profit`);
+}
+
+// ============================
+// FOREX
+// ============================
+function calcFX() {
+  const amt=g('fx_amt'), rate=g('fx_rate'), dir=gs('fx_dir');
+  const res = dir==='to' ? amt*rate : amt/rate;
+  showResult('fx', fmtN(res,2));
+}
+function calcPPP() {
+  const spot=g('ppp_spot'), infD=g('ppp_inf_d')/100, infF=g('ppp_inf_f')/100, y=g('ppp_y');
+  const fwd = spot*Math.pow((1+infD)/(1+infF),y);
+  showResult('ppp', fmtN(fwd,4));
+}
+function calcIRP() {
+  const spot=g('irp_spot'), rd=g('irp_rd')/100, rf=g('irp_rf')/100, t=g('irp_t');
+  const fwd = spot*(1+rd)/(1+rf);
+  showResult('irp', fmtN(fwd,4));
+}
+function calcFwdX() {
+  const s=g('fwdx_s'), rd=g('fwdx_rd')/100, rf=g('fwdx_rf')/100, days=g('fwdx_days');
+  const fwd = s*(1+rd*days/365)/(1+rf*days/365);
+  showResult('fwdx', fmtN(fwd,4));
+}
+function calcRER() {
+  const n=g('rer_n'), pf=g('rer_pf'), pd=g('rer_pd');
+  const rer = n*(pf/pd);
+  showResult('rer', fmtN(rer,4));
+}
+function calcFisher() {
+  const nom=g('fish_n')/100, inf=g('fish_inf')/100;
+  const realApprox = (nom-inf)*100;
+  const realExact = ((1+nom)/(1+inf)-1)*100;
+  showMulti('fish',[
+    ['Real Rate (approx)', fmtP(realApprox)],
+    ['Real Rate (Fisher exact)', fmtP(realExact)]
+  ]);
+}
+function calcBMI() {
+  const d=g('bmi_d'), f=g('bmi_f'), fx=g('bmi_fx');
+  const impliedRate = d/f;
+  const overunder = (impliedRate/fx-1)*100;
+  showMulti('bmi',[
+    ['Implied PPP Rate', fmtN(impliedRate,2)],
+    ['Actual Rate', fmtN(fx,2)],
+    ['Currency', overunder>0?'Overvalued by '+fmtP(overunder):'Undervalued by '+fmtP(Math.abs(overunder)), overunder>0?'neg':'pos']
+  ]);
+}
+
+// ============================
+// REAL ESTATE
+// ============================
+function calcCapRate() {
+  const noi=g('cap_noi'), pv=g('cap_pv');
+  const cr = noi/pv*100;
+  showResult('cap', fmtP(cr), `${cr>7?'Good yield':cr>4?'Moderate':'Low yield'} (typical Indian market: 3–7%)`);
+}
+function calcRY() {
+  const rent=g('ry_rent'), pv=g('ry_pv'), exp=g('ry_exp');
+  const gross = rent/pv*100;
+  const net = (rent-exp)/pv*100;
+  showMulti('ry',[
+    ['Gross Rental Yield', fmtP(gross)],
+    ['Net Rental Yield', fmtP(net), net>4?'pos':'']
+  ]);
+}
+function calcNOI() {
+  const gr=g('noi_gr'), vac=g('noi_vac'), exp=g('noi_exp');
+  const noi = gr-vac-exp;
+  showResult('noi', fmt(noi), `Effective gross income: ${fmt(gr-vac)}`);
+}
+function calcPTR() {
+  const p=g('ptr_p'), r=g('ptr_r');
+  const ptr = p/r;
+  showResult('ptr', fmtN(ptr,1)+'x', `${ptr<15?'Better to buy':ptr>20?'Better to rent':'Near break-even'}`);
+}
+function calcCoC() {
+  const cf=g('coc_cf'), inv=g('coc_inv');
+  showResult('coc', fmtP(cf/inv*100));
+}
+function calcGRM() {
+  const p=g('grm_p'), r=g('grm_r');
+  const grm = p/r;
+  showResult('grm', fmtN(grm,1)+'x', `Payback via gross rent: ${fmtN(grm,1)} years`);
+}
+function calcLTV() {
+  const loan=g('ltv_loan'), pv=g('ltv_pv');
+  const ltv = loan/pv*100;
+  showResult('ltv', fmtP(ltv), `${ltv>80?'High LTV — higher risk':'Conservative LTV'}`);
+}
+function calcDSCR() {
+  const noi=g('dscr_noi'), ds=g('dscr_ds');
+  const dscr = noi/ds;
+  showResult('dscr', fmtN(dscr,2)+'x', `${dscr>=1.25?'Lender-acceptable (≥1.25x)':'Below minimum threshold (1.25x)'}`);
+}
+
+// ============================
+// STARTUP / VC
+// ============================
+function calcPMV() {
+  const pre=g('pmv_pre'), inv=g('pmv_inv');
+  const post = pre+inv;
+  const vcPct = inv/post*100;
+  showMulti('pmv',[
+    ['Pre-money Valuation', '₹'+fmtN(pre,1)+' Cr'],
+    ['Post-money Valuation', '₹'+fmtN(post,1)+' Cr'],
+    ['VC Ownership', fmtP(vcPct)],
+    ['Founder Ownership', fmtP(100-vcPct)]
+  ]);
+}
+function calcDilution() {
+  const sb=g('dil_sb'), nw=g('dil_new'), own=g('dil_own');
+  const total = sb+nw;
+  const before = own/sb*100;
+  const after = own/total*100;
+  showMulti('dil',[
+    ['Pre-round Ownership', fmtP(before)],
+    ['Post-round Ownership', fmtP(after)],
+    ['Dilution', fmtP(before-after)]
+  ]);
+}
+function calcMOIC() {
+  const e=g('moic_e'), inv=g('moic_inv'), y=g('moic_y');
+  const moic = e/inv;
+  const irr = (Math.pow(moic,1/y)-1)*100;
+  showMulti('moic',[
+    ['MOIC', fmtN(moic,2)+'x'],
+    ['IRR (approx)', fmtP(irr)],
+    ['Verdict', moic>=3?'Excellent (≥3x)':moic>=2?'Good (≥2x)':'Below target']
+  ]);
+}
+function calcLTVCAC() {
+  const ltv=g('ltvcac_ltv'), cac=g('ltvcac_cac');
+  const ratio = ltv/cac;
+  showResult('ltvcac', fmtN(ratio,1)+'x', `${ratio>=3?'Healthy (≥3x)':ratio>=1?'Breakeven zone':'Unsustainable (<1x)'}`);
+}
+function calcBurn() {
+  const cash=g('burn_cash'), rev=g('burn_rev'), exp=g('burn_exp');
+  const netBurn = exp-rev;
+  const runway = netBurn>0 ? cash/netBurn : 999;
+  showMulti('burn',[
+    ['Net Burn / month', '₹'+fmtN(netBurn,2)+' Cr', netBurn>0?'neg':'pos'],
+    ['Runway', runway>=999?'Profitable':fmtN(runway,1)+' months'],
+    ['Gross Burn', '₹'+fmtN(exp,2)+' Cr / month']
+  ]);
+}
+function calcVCMethod() {
+  const rev=g('vc_rev'), mult=g('vc_mult'), r=g('vc_r')/100, y=g('vc_y'), inv=g('vc_inv');
+  const exitVal = rev*mult;
+  const postMoney = exitVal/Math.pow(1+r,y);
+  const preMoney = postMoney-inv;
+  const vcOwn = inv/postMoney*100;
+  showMulti('vc',[
+    ['Expected Exit Value', '₹'+fmtN(exitVal,1)+' Cr'],
+    ['Post-money (today)', '₹'+fmtN(postMoney,1)+' Cr'],
+    ['Pre-money', '₹'+fmtN(preMoney,1)+' Cr'],
+    ['VC Equity %', fmtP(vcOwn)]
+  ]);
+}
+function calcOPS() {
+  const pre=g('ops_pre'), inv=g('ops_inv'), pool=g('ops_pool')/100;
+  const post = pre+inv;
+  const poolShares = post*pool;
+  const adjustedPre = pre-poolShares;
+  showMulti('ops',[
+    ['True Pre-money (after shuffle)', '₹'+fmtN(adjustedPre,2)+' Cr'],
+    ['Option Pool Value', '₹'+fmtN(poolShares,2)+' Cr'],
+    ['Post-money', '₹'+fmtN(post,1)+' Cr']
+  ]);
+}
+function calcWaterfall() {
+  const exit=g('wf_exit'), pref=g('wf_pref'), lm=g('wf_lm'), vcPct=g('wf_vc_pct')/100;
+  const prefReturn = pref*lm;
+  const remaining = Math.max(0, exit-prefReturn);
+  const vcTotal = prefReturn + remaining*vcPct;
+  const founderTotal = remaining*(1-vcPct);
+  showMulti('wf',[
+    ['VC Liquidation Pref', '₹'+fmtN(prefReturn,1)+' Cr'],
+    ['Remaining Pool', '₹'+fmtN(remaining,1)+' Cr'],
+    ['VC Total Proceeds', '₹'+fmtN(vcTotal,1)+' Cr'],
+    ['Founder Total Proceeds', '₹'+fmtN(founderTotal,1)+' Cr'],
+    ['VC MOIC', fmtN(vcTotal/pref,2)+'x']
+  ]);
+}
+
+// ============================
+// TAX
+// ============================
+function calcATR() {
+  const pre=g('atr_pre'), tax=g('atr_tax')/100;
+  const after = pre*(1-tax);
+  showResult('atr', fmtP(after));
+}
+function calcCG() {
+  const sv=g('cg_sv'), pv=g('cg_pv'), type=gs('cg_type');
+  const gain = sv-pv;
+  let tax=0, rate='', note='';
+  if (type==='ltcg') {
+    const exemption = Math.min(gain, 125000);
+    const taxable = Math.max(0, gain-exemption);
+    tax = taxable*0.125;
+    rate = '12.5% LTCG';
+    note = `₹1.25L exemption applied. Taxable gain: ${fmt(taxable)}`;
+  } else if (type==='stcg') {
+    tax = gain*0.20;
+    rate = '20% STCG';
+    note = 'Post-Budget 2024 rate';
+  } else {
+    tax = gain*0.20;
+    rate = '20% with indexation';
+    note = 'Other assets LTCG (indexation benefit available)';
+  }
+  showMulti('cg',[
+    ['Capital Gain', fmt(gain), gain>0?'pos':'neg'],
+    ['Tax Rate', rate],
+    ['Tax Payable', fmt(tax)],
+    ['Net Proceeds', fmt(sv-tax)],
+    ['Note', note]
+  ]);
+}
+function calcTEY() {
+  const y=g('tey_y')/100, tax=g('tey_tax')/100;
+  const tey = y/(1-tax)*100;
+  showResult('tey', fmtP(tey), `A taxable bond must yield ${fmtP(tey)} to match the tax-exempt yield`);
+}
+function calcETR() {
+  const tax=g('etr_tax'), inc=g('etr_inc');
+  showResult('etr', fmtP(tax/inc*100));
+}
+function calcICA() {
+  const cost=g('ica_cost'), ciiP=g('ica_cii_p'), ciiS=g('ica_cii_s');
+  const ica = cost*(ciiS/ciiP);
+  showResult('ica', fmt(ica), `Cost inflation index ratio: ${fmtN(ciiS/ciiP,3)}`);
+}
+function calcTDS() {
+  const net=g('tds_net'), rate=g('tds_rate')/100;
+  const gross = net/(1-rate);
+  const tds = gross-net;
+  showMulti('tds',[
+    ['Gross Amount', fmt(gross)],
+    ['TDS Deducted', fmt(tds)],
+    ['Net Received', fmt(net)],
+    ['Effective TDS Rate', fmtP(rate*100)]
+  ]);
+}
+</script>
+</body>
+</html>
